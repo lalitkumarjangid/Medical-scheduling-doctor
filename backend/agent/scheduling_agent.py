@@ -850,16 +850,17 @@ class SchedulingAgent:
     
     async def _get_upcoming_available_slots(self, days: int = 5, appointment_type: str = "consultation") -> str:
         """
-        Get available slots for the next few days.
+        Get available slots for the next few days from ALL doctors.
         
         Args:
             days: Number of days to check
             appointment_type: Type of appointment
             
         Returns:
-            Formatted string with available slots
+            Formatted string with available slots including doctor names
         """
         from datetime import timedelta
+        import aiohttp
         
         slots_info = []
         current_date = datetime.now()
@@ -869,7 +870,54 @@ class SchedulingAgent:
             date_str = check_date.strftime("%Y-%m-%d")
             day_name = check_date.strftime("%A, %B %d")
             
-            # Get available slots for this date
+            # Try to get all doctors availability from the API
+            try:
+                async with aiohttp.ClientSession() as session:
+                    url = f"{self.api_base_url}/api/calendly/availability/all-doctors?date={date_str}&appointment_type={appointment_type}"
+                    async with session.get(url) as resp:
+                        if resp.status == 200:
+                            data = await resp.json()
+                            doctors_with_slots = data.get("doctors_with_availability", [])
+                            
+                            if doctors_with_slots:
+                                day_info = f"\n📅 **{day_name}**"
+                                
+                                for doctor_data in doctors_with_slots:
+                                    doctor_name = doctor_data.get("doctor_name", "Unknown")
+                                    specialty = doctor_data.get("specialty", "")
+                                    slots = doctor_data.get("slots", [])
+                                    
+                                    if slots:
+                                        # Format times nicely
+                                        morning_slots = []
+                                        afternoon_slots = []
+                                        
+                                        for slot in slots[:6]:  # Limit slots per doctor
+                                            time_str = slot["start_time"]
+                                            hour = int(time_str.split(":")[0])
+                                            
+                                            # Convert to 12-hour format
+                                            if hour < 12:
+                                                h12 = hour if hour > 0 else 12
+                                                formatted_time = f"{h12}:{time_str.split(':')[1]} AM"
+                                                morning_slots.append(formatted_time)
+                                            else:
+                                                h12 = hour - 12 if hour > 12 else hour
+                                                formatted_time = f"{h12}:{time_str.split(':')[1]} PM"
+                                                afternoon_slots.append(formatted_time)
+                                        
+                                        day_info += f"\n   👨‍⚕️ **{doctor_name}** ({specialty})"
+                                        if morning_slots:
+                                            day_info += f"\n      Morning: {', '.join(morning_slots[:3])}"
+                                        if afternoon_slots:
+                                            day_info += f"\n      Afternoon: {', '.join(afternoon_slots[:3])}"
+                                
+                                slots_info.append(day_info)
+                            continue
+            except Exception as e:
+                print(f"Error fetching all doctors availability: {e}")
+            
+            # Fallback to single doctor availability
             result = await self.availability_tool.get_available_slots(date_str, appointment_type)
             
             if result.get("success"):
@@ -885,14 +933,15 @@ class SchedulingAgent:
                         
                         # Convert to 12-hour format
                         if hour < 12:
-                            formatted_time = f"{hour}:{time_str.split(':')[1]} AM"
+                            h12 = hour if hour > 0 else 12
+                            formatted_time = f"{h12}:{time_str.split(':')[1]} AM"
                             morning_slots.append(formatted_time)
                         else:
                             h12 = hour - 12 if hour > 12 else hour
                             formatted_time = f"{h12}:{time_str.split(':')[1]} PM"
                             afternoon_slots.append(formatted_time)
                     
-                    day_info = f"📅 {day_name}:"
+                    day_info = f"\n📅 **{day_name}**"
                     if morning_slots:
                         day_info += f"\n   Morning: {', '.join(morning_slots[:4])}"
                     if afternoon_slots:
