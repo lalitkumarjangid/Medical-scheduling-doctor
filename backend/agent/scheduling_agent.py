@@ -153,7 +153,7 @@ class SchedulingAgent:
                 return Intent.CANCEL, entities
             return Intent.FAQ, entities
         
-        # Scheduling intent
+        # Scheduling intent - explicit keywords
         schedule_keywords = ["schedule", "book", "appointment", "see the doctor", "need to see", "want to see", "scheduling"]
         if any(kw in message_lower for kw in schedule_keywords):
             # Extract date if present
@@ -166,6 +166,15 @@ class SchedulingAgent:
             if time_pref != "any":
                 entities["time_preference"] = time_pref
             
+            return Intent.SCHEDULE, entities
+        
+        # Medical symptoms that imply scheduling need
+        symptom_keywords = ["pain", "headache", "migraine", "fever", "sick", "hurt", "ache", 
+                          "sore", "cough", "cold", "flu", "nausea", "dizzy", "tired",
+                          "chest pain", "stomach", "throat", "symptoms"]
+        if any(kw in message_lower for kw in symptom_keywords):
+            # User is describing symptoms - treat as scheduling request
+            entities["reason"] = message
             return Intent.SCHEDULE, entities
         
         # Cancel intent
@@ -618,15 +627,17 @@ class SchedulingAgent:
         # Get stored available slots from state
         available_slots = getattr(state, 'available_slots', [])
         
+        # Default to tomorrow if no preferred date
+        default_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+        selected_date = state.preferred_date or default_date
+        selected_time = None
+        
         # Check for day names
         days_map = {
             "monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3,
             "friday": 4, "saturday": 5, "sunday": 6,
             "tomorrow": None, "today": None
         }
-        
-        selected_date = state.preferred_date
-        selected_time = None
         
         # Extract day
         for day_name in days_map.keys():
@@ -1094,6 +1105,8 @@ class SchedulingAgent:
         else:
             tomorrow = datetime.now() + timedelta(days=1)
             date = tomorrow.strftime("%Y-%m-%d")
+            # Store the date so slot selection knows which date we showed
+            state.preferred_date = date
         
         appt_type = state.appointment_type.value if state.appointment_type else "consultation"
         

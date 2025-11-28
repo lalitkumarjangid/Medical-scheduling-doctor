@@ -2,6 +2,8 @@
 
 An intelligent conversational agent that helps patients schedule medical appointments through a natural chat interface. Built with FastAPI, React, and OpenAI GPT-4.
 
+Wroking Video : https://www.loom.com/share/d1e7e8a73ebd4e628b73c37fb975e8ae
+
 ![Architecture](architecture_diagram.png)
 
 ## 🌟 Features
