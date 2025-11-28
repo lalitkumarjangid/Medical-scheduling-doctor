@@ -416,6 +416,118 @@ async def get_appointment(booking_id: str):
     raise HTTPException(status_code=404, detail="Appointment not found.")
 
 
+@router.get("/appointments")
+async def get_all_appointments(
+    status: Optional[str] = None,
+    date: Optional[str] = None,
+    patient_email: Optional[str] = None
+):
+    """
+    Get all booked appointments with optional filters.
+    
+    - **status**: Filter by status (confirmed, cancelled, completed)
+    - **date**: Filter by specific date (YYYY-MM-DD)
+    - **patient_email**: Filter by patient email
+    """
+    schedule_data = load_schedule_data()
+    appointments = schedule_data.get("existing_appointments", [])
+    
+    # Apply filters
+    if status:
+        appointments = [a for a in appointments if a.get("status") == status]
+    
+    if date:
+        appointments = [a for a in appointments if a.get("date") == date]
+    
+    if patient_email:
+        appointments = [a for a in appointments if a.get("patient_email") == patient_email]
+    
+    # Sort by date and time
+    appointments = sorted(
+        appointments,
+        key=lambda x: (x.get("date", ""), x.get("start_time", ""))
+    )
+    
+    # Format appointments for display
+    formatted_appointments = []
+    for appt in appointments:
+        formatted_appointments.append({
+            "booking_id": appt.get("id"),
+            "confirmation_code": appt.get("confirmation_code"),
+            "date": appt.get("date"),
+            "day_name": get_day_name(appt.get("date", datetime.now().strftime("%Y-%m-%d"))).capitalize(),
+            "start_time": appt.get("start_time"),
+            "end_time": appt.get("end_time"),
+            "appointment_type": appt.get("type"),
+            "patient_name": appt.get("patient_name"),
+            "patient_email": appt.get("patient_email"),
+            "patient_phone": appt.get("patient_phone"),
+            "reason": appt.get("reason"),
+            "status": appt.get("status"),
+            "doctor_name": "Dr. Sarah Johnson",
+            "created_at": appt.get("created_at")
+        })
+    
+    return {
+        "total": len(formatted_appointments),
+        "appointments": formatted_appointments
+    }
+
+
+@router.get("/my-appointments")
+async def get_my_appointments(email: str):
+    """
+    Get all appointments for a specific patient by email.
+    
+    - **email**: Patient's email address
+    """
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+    
+    schedule_data = load_schedule_data()
+    appointments = schedule_data.get("existing_appointments", [])
+    
+    # Filter by patient email
+    patient_appointments = [a for a in appointments if a.get("patient_email", "").lower() == email.lower()]
+    
+    # Categorize appointments
+    today = datetime.now().strftime("%Y-%m-%d")
+    
+    upcoming = []
+    past = []
+    
+    for appt in patient_appointments:
+        appt_info = {
+            "booking_id": appt.get("id"),
+            "confirmation_code": appt.get("confirmation_code"),
+            "date": appt.get("date"),
+            "day_name": get_day_name(appt.get("date", today)).capitalize(),
+            "start_time": appt.get("start_time"),
+            "end_time": appt.get("end_time"),
+            "appointment_type": appt.get("type"),
+            "reason": appt.get("reason"),
+            "status": appt.get("status"),
+            "doctor_name": "Dr. Sarah Johnson"
+        }
+        
+        if appt.get("date", "") >= today and appt.get("status") == "confirmed":
+            upcoming.append(appt_info)
+        else:
+            past.append(appt_info)
+    
+    # Sort upcoming by date/time ascending, past by date/time descending
+    upcoming = sorted(upcoming, key=lambda x: (x["date"], x["start_time"]))
+    past = sorted(past, key=lambda x: (x["date"], x["start_time"]), reverse=True)
+    
+    return {
+        "email": email,
+        "upcoming_appointments": upcoming,
+        "past_appointments": past,
+        "total_upcoming": len(upcoming),
+        "total_past": len(past)
+    }
+
+
 @router.get("/schedule/dates")
 async def get_available_dates(days_ahead: int = 14, appointment_type: str = "consultation"):
     """
