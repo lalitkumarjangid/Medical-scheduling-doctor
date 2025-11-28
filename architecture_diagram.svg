@@ -1,0 +1,213 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc"/>
+      <stop offset="100%" style="stop-color:#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="frontendGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6"/>
+      <stop offset="100%" style="stop-color:#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="backendGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981"/>
+      <stop offset="100%" style="stop-color:#059669"/>
+    </linearGradient>
+    <linearGradient id="agentGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="dataGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#d97706"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="4" stdDeviation="4" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="900" fill="url(#bgGrad)"/>
+  
+  <!-- Title -->
+  <text x="600" y="45" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#1e293b" text-anchor="middle">Medical Appointment Scheduling Agent - Architecture</text>
+  
+  <!-- Frontend Section -->
+  <g filter="url(#shadow)">
+    <rect x="50" y="70" width="1100" height="140" rx="12" fill="url(#frontendGrad)"/>
+    <text x="100" y="105" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white">Frontend (React + Vite + TailwindCSS)</text>
+    
+    <!-- Frontend Components -->
+    <rect x="80" y="120" width="180" height="70" rx="8" fill="white" fill-opacity="0.95"/>
+    <text x="170" y="150" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1d4ed8" text-anchor="middle">ChatInterface</text>
+    <text x="170" y="170" font-family="Arial, sans-serif" font-size="11" fill="#64748b" text-anchor="middle">Message I/O, Session</text>
+    
+    <rect x="290" y="120" width="180" height="70" rx="8" fill="white" fill-opacity="0.95"/>
+    <text x="380" y="150" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1d4ed8" text-anchor="middle">Appointment</text>
+    <text x="380" y="170" font-family="Arial, sans-serif" font-size="11" fill="#64748b" text-anchor="middle">Confirmation Display</text>
+    
+    <rect x="500" y="120" width="180" height="70" rx="8" fill="white" fill-opacity="0.95"/>
+    <text x="590" y="150" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1d4ed8" text-anchor="middle">Quick Actions</text>
+    <text x="590" y="170" font-family="Arial, sans-serif" font-size="11" fill="#64748b" text-anchor="middle">FAQ, Schedule buttons</text>
+    
+    <rect x="710" y="120" width="180" height="70" rx="8" fill="white" fill-opacity="0.95"/>
+    <text x="800" y="150" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1d4ed8" text-anchor="middle">Clinic Info</text>
+    <text x="800" y="170" font-family="Arial, sans-serif" font-size="11" fill="#64748b" text-anchor="middle">Hours, Location, Types</text>
+  </g>
+  
+  <!-- Arrow: Frontend to Backend -->
+  <path d="M 600 210 L 600 250" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="620" y="235" font-family="Arial, sans-serif" font-size="12" fill="#64748b">REST API</text>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
+    </marker>
+  </defs>
+  
+  <!-- Backend Section -->
+  <g filter="url(#shadow)">
+    <rect x="50" y="260" width="1100" height="580" rx="12" fill="url(#backendGrad)"/>
+    <text x="100" y="295" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white">Backend (FastAPI + Python 3.10+)</text>
+    
+    <!-- Chat API -->
+    <rect x="80" y="315" width="250" height="80" rx="8" fill="white" fill-opacity="0.95"/>
+    <text x="205" y="345" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#059669" text-anchor="middle">Chat API</text>
+    <text x="205" y="365" font-family="Arial, sans-serif" font-size="11" fill="#64748b" text-anchor="middle">/api/chat/message</text>
+    <text x="205" y="380" font-family="Arial, sans-serif" font-size="11" fill="#64748b" text-anchor="middle">Session Management</text>
+    
+    <!-- Calendly API -->
+    <rect x="850" y="315" width="280" height="80" rx="8" fill="white" fill-opacity="0.95"/>
+    <text x="990" y="345" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#059669" text-anchor="middle">Mock Calendly API</text>
+    <text x="990" y="365" font-family="Arial, sans-serif" font-size="11" fill="#64748b" text-anchor="middle">/api/calendly/availability</text>
+    <text x="990" y="380" font-family="Arial, sans-serif" font-size="11" fill="#64748b" text-anchor="middle">/api/calendly/book</text>
+  </g>
+  
+  <!-- Agent Section (inside Backend) -->
+  <g filter="url(#shadow)">
+    <rect x="80" y="420" width="1050" height="180" rx="10" fill="url(#agentGrad)"/>
+    <text x="130" y="450" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">Scheduling Agent (LLM-Powered)</text>
+    
+    <!-- Intent Classifier -->
+    <rect x="110" y="470" width="200" height="110" rx="8" fill="white" fill-opacity="0.95"/>
+    <text x="210" y="500" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#6d28d9" text-anchor="middle">Intent Classifier</text>
+    <text x="210" y="520" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">SCHEDULE | FAQ</text>
+    <text x="210" y="535" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">CANCEL | RESCHEDULE</text>
+    <text x="210" y="550" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">CONFIRM | PROVIDE_INFO</text>
+    <text x="210" y="565" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Rule-based + NLU</text>
+    
+    <!-- Conversation Manager -->
+    <rect x="340" y="470" width="200" height="110" rx="8" fill="white" fill-opacity="0.95"/>
+    <text x="440" y="500" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#6d28d9" text-anchor="middle">Conversation Manager</text>
+    <text x="440" y="520" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Phase Tracking</text>
+    <text x="440" y="535" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">State Persistence</text>
+    <text x="440" y="550" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Context Switching</text>
+    <text x="440" y="565" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Session Management</text>
+    
+    <!-- Response Generator -->
+    <rect x="570" y="470" width="200" height="110" rx="8" fill="white" fill-opacity="0.95"/>
+    <text x="670" y="500" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#6d28d9" text-anchor="middle">Response Generator</text>
+    <text x="670" y="520" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">OpenAI GPT-4 Turbo</text>
+    <text x="670" y="535" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">System Prompts</text>
+    <text x="670" y="550" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Empathetic Responses</text>
+    <text x="670" y="565" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Fallback Handling</text>
+    
+    <!-- Entity Extractor -->
+    <rect x="800" y="470" width="200" height="110" rx="8" fill="white" fill-opacity="0.95"/>
+    <text x="900" y="500" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#6d28d9" text-anchor="middle">Entity Extractor</text>
+    <text x="900" y="520" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Date Parsing</text>
+    <text x="900" y="535" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Time Preferences</text>
+    <text x="900" y="550" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Patient Info</text>
+    <text x="900" y="565" font-family="Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Regex + NLP</text>
+  </g>
+  
+  <!-- Tools Section -->
+  <g filter="url(#shadow)">
+    <rect x="80" y="620" width="500" height="100" rx="8" fill="white" fill-opacity="0.95"/>
+    <text x="330" y="650" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#059669" text-anchor="middle">Scheduling Tools</text>
+    
+    <rect x="100" y="665" width="140" height="40" rx="6" fill="#d1fae5"/>
+    <text x="170" y="690" font-family="Arial, sans-serif" font-size="11" fill="#065f46" text-anchor="middle">AvailabilityTool</text>
+    
+    <rect x="260" y="665" width="140" height="40" rx="6" fill="#d1fae5"/>
+    <text x="330" y="690" font-family="Arial, sans-serif" font-size="11" fill="#065f46" text-anchor="middle">BookingTool</text>
+    
+    <rect x="420" y="665" width="140" height="40" rx="6" fill="#d1fae5"/>
+    <text x="490" y="690" font-family="Arial, sans-serif" font-size="11" fill="#065f46" text-anchor="middle">ValidationTool</text>
+  </g>
+  
+  <!-- RAG Section -->
+  <g filter="url(#shadow)">
+    <rect x="610" y="620" width="520" height="100" rx="8" fill="white" fill-opacity="0.95"/>
+    <text x="870" y="650" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#d97706" text-anchor="middle">FAQ RAG System</text>
+    
+    <rect x="630" y="665" width="150" height="40" rx="6" fill="#fef3c7"/>
+    <text x="705" y="690" font-family="Arial, sans-serif" font-size="11" fill="#92400e" text-anchor="middle">Vector Store</text>
+    
+    <rect x="800" y="665" width="150" height="40" rx="6" fill="#fef3c7"/>
+    <text x="875" y="690" font-family="Arial, sans-serif" font-size="11" fill="#92400e" text-anchor="middle">Embeddings</text>
+    
+    <rect x="970" y="665" width="140" height="40" rx="6" fill="#fef3c7"/>
+    <text x="1040" y="690" font-family="Arial, sans-serif" font-size="11" fill="#92400e" text-anchor="middle">ChromaDB</text>
+  </g>
+  
+  <!-- Data Layer -->
+  <g filter="url(#shadow)">
+    <rect x="80" y="740" width="500" height="80" rx="8" fill="url(#dataGrad)"/>
+    <text x="330" y="770" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">Data Layer</text>
+    
+    <rect x="100" y="785" width="220" height="25" rx="4" fill="white" fill-opacity="0.9"/>
+    <text x="210" y="802" font-family="Arial, sans-serif" font-size="11" fill="#92400e" text-anchor="middle">doctor_schedule.json</text>
+    
+    <rect x="340" y="785" width="220" height="25" rx="4" fill="white" fill-opacity="0.9"/>
+    <text x="450" y="802" font-family="Arial, sans-serif" font-size="11" fill="#92400e" text-anchor="middle">clinic_info.json (FAQs)</text>
+  </g>
+  
+  <!-- Vector DB -->
+  <g filter="url(#shadow)">
+    <rect x="610" y="740" width="520" height="80" rx="8" fill="#8b5cf6"/>
+    <text x="870" y="770" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">Vector Database (ChromaDB)</text>
+    
+    <rect x="680" y="785" width="380" height="25" rx="4" fill="white" fill-opacity="0.9"/>
+    <text x="870" y="802" font-family="Arial, sans-serif" font-size="11" fill="#6d28d9" text-anchor="middle">Persisted Embeddings (./data/vectordb)</text>
+  </g>
+  
+  <!-- Connection Arrows -->
+  <!-- Chat API to Agent -->
+  <path d="M 205 395 L 205 420" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Agent to Tools -->
+  <path d="M 330 600 L 330 620" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Agent to RAG -->
+  <path d="M 870 600 L 870 620" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Tools to Data -->
+  <path d="M 330 720 L 330 740" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- RAG to Vector DB -->
+  <path d="M 870 720 L 870 740" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Tools to Calendly API -->
+  <path d="M 580 670 L 850 355" stroke="#64748b" stroke-width="2" stroke-dasharray="5,5" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- Legend -->
+  <rect x="920" y="75" width="220" height="120" rx="8" fill="white" fill-opacity="0.9" stroke="#e2e8f0"/>
+  <text x="1030" y="100" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1e293b" text-anchor="middle">Legend</text>
+  
+  <rect x="935" y="115" width="20" height="12" fill="url(#frontendGrad)"/>
+  <text x="965" y="125" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Frontend</text>
+  
+  <rect x="935" y="135" width="20" height="12" fill="url(#backendGrad)"/>
+  <text x="965" y="145" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Backend</text>
+  
+  <rect x="935" y="155" width="20" height="12" fill="url(#agentGrad)"/>
+  <text x="965" y="165" font-family="Arial, sans-serif" font-size="10" fill="#64748b">AI Agent</text>
+  
+  <rect x="1040" y="115" width="20" height="12" fill="url(#dataGrad)"/>
+  <text x="1070" y="125" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Data</text>
+  
+  <line x1="1040" y1="141" x2="1060" y2="141" stroke="#64748b" stroke-width="2"/>
+  <text x="1070" y="145" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Flow</text>
+  
+  <line x1="1040" y1="161" x2="1060" y2="161" stroke="#64748b" stroke-width="2" stroke-dasharray="5,5"/>
+  <text x="1070" y="165" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Async</text>
+</svg>

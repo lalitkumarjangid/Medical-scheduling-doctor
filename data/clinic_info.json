@@ -1,0 +1,205 @@
+{
+  "clinic": {
+    "name": "HealthCare Plus Clinic",
+    "phone": "+1-555-123-4567",
+    "email": "appointments@healthcareplus.com",
+    "website": "https://www.healthcareplusclinic.com"
+  },
+  "location": {
+    "address": "123 Medical Center Drive, Suite 200",
+    "city": "Springfield",
+    "state": "IL",
+    "zip": "62701",
+    "directions": "Located in the Medical Arts Building, next to Springfield General Hospital. Enter through the main lobby and take the elevator to the 2nd floor.",
+    "parking": "Free parking is available in the underground garage. Accessible parking spots are located near the elevator entrance. Street parking is also available with 2-hour limits."
+  },
+  "hours": {
+    "monday": {"open": "08:00", "close": "18:00"},
+    "tuesday": {"open": "08:00", "close": "18:00"},
+    "wednesday": {"open": "08:00", "close": "18:00"},
+    "thursday": {"open": "08:00", "close": "18:00"},
+    "friday": {"open": "08:00", "close": "17:00"},
+    "saturday": {"open": "09:00", "close": "13:00"},
+    "sunday": {"open": null, "close": null, "closed": true}
+  },
+  "insurance": {
+    "accepted_providers": [
+      "Blue Cross Blue Shield",
+      "Aetna",
+      "Cigna",
+      "UnitedHealthcare",
+      "Medicare",
+      "Medicaid",
+      "Humana",
+      "Kaiser Permanente"
+    ],
+    "payment_methods": ["Cash", "Credit Card", "Debit Card", "HSA", "FSA", "Check"],
+    "billing_policy": "We will bill your insurance directly. Any co-pays or deductibles are due at the time of your visit. We offer payment plans for uninsured patients."
+  },
+  "visit_preparation": {
+    "first_visit": {
+      "documents": [
+        "Photo ID (driver's license or passport)",
+        "Insurance card (front and back)",
+        "List of current medications",
+        "Previous medical records if available",
+        "Referral letter if required by your insurance"
+      ],
+      "recommendations": [
+        "Arrive 15 minutes early to complete paperwork",
+        "Bring a list of questions for the doctor",
+        "Wear comfortable clothing for examination",
+        "Bring a family member if you need support"
+      ]
+    },
+    "follow_up": {
+      "documents": [
+        "Insurance card if changed",
+        "Updated medication list",
+        "Any test results from other providers"
+      ],
+      "recommendations": [
+        "Arrive 5-10 minutes before your appointment",
+        "Bring notes about any new symptoms"
+      ]
+    }
+  },
+  "policies": {
+    "cancellation": {
+      "notice_required": "24 hours",
+      "fee": "$50 for no-shows without notice",
+      "description": "Please cancel or reschedule at least 24 hours in advance. Cancellations with less than 24 hours notice or no-shows may result in a $50 fee. We understand emergencies happen - please call us if you have special circumstances."
+    },
+    "late_arrival": {
+      "grace_period": "15 minutes",
+      "policy": "If you arrive more than 15 minutes late, we may need to reschedule your appointment to ensure quality care for all patients. Please call ahead if you're running late."
+    },
+    "covid_protocols": {
+      "current_status": "Modified protocols in place",
+      "requirements": [
+        "Masks are optional but available upon request",
+        "Hand sanitizer stations throughout the clinic",
+        "Enhanced cleaning between patients",
+        "Telehealth options available for non-emergency visits",
+        "Separate waiting areas for sick and well visits"
+      ]
+    }
+  },
+  "faqs": [
+    {
+      "category": "Location",
+      "question": "Where is the clinic located?",
+      "answer": "We are located at 123 Medical Center Drive, Suite 200, Springfield, IL 62701. We're in the Medical Arts Building, next to Springfield General Hospital."
+    },
+    {
+      "category": "Location",
+      "question": "Is there parking available?",
+      "answer": "Yes! We have free parking in the underground garage with accessible spots near the elevator. Street parking is also available with 2-hour limits."
+    },
+    {
+      "category": "Location",
+      "question": "How do I get to your office?",
+      "answer": "Enter the Medical Arts Building through the main lobby, take the elevator to the 2nd floor, and our clinic is in Suite 200. Signs will guide you from the elevator."
+    },
+    {
+      "category": "Hours",
+      "question": "What are your hours of operation?",
+      "answer": "We're open Monday-Thursday 8AM-6PM, Friday 8AM-5PM, and Saturday 9AM-1PM. We're closed on Sundays."
+    },
+    {
+      "category": "Hours",
+      "question": "Are you open on weekends?",
+      "answer": "Yes, we're open on Saturdays from 9AM to 1PM. We're closed on Sundays."
+    },
+    {
+      "category": "Insurance",
+      "question": "What insurance do you accept?",
+      "answer": "We accept most major insurance providers including Blue Cross Blue Shield, Aetna, Cigna, UnitedHealthcare, Medicare, Medicaid, Humana, and Kaiser Permanente. We also welcome self-pay patients."
+    },
+    {
+      "category": "Insurance",
+      "question": "Do you accept Medicare?",
+      "answer": "Yes, we accept Medicare and Medicaid. Please bring your insurance card to your appointment."
+    },
+    {
+      "category": "Insurance",
+      "question": "What payment methods do you accept?",
+      "answer": "We accept cash, credit cards, debit cards, HSA, FSA, and checks. We also offer payment plans for uninsured patients."
+    },
+    {
+      "category": "Billing",
+      "question": "How does billing work?",
+      "answer": "We bill your insurance directly. Co-pays and deductibles are due at the time of your visit. For uninsured patients, we offer payment plans to make care accessible."
+    },
+    {
+      "category": "Preparation",
+      "question": "What should I bring to my first visit?",
+      "answer": "Please bring: photo ID, insurance card (front and back), list of current medications, any previous medical records, and a referral letter if required. Arrive 15 minutes early to complete paperwork."
+    },
+    {
+      "category": "Preparation",
+      "question": "What documents do I need for my appointment?",
+      "answer": "For your first visit, bring photo ID, insurance card, medication list, and any medical records. For follow-ups, bring your insurance card if it changed and any new test results."
+    },
+    {
+      "category": "Preparation",
+      "question": "Should I arrive early?",
+      "answer": "Yes! For first visits, please arrive 15 minutes early to complete paperwork. For follow-up appointments, arriving 5-10 minutes early is sufficient."
+    },
+    {
+      "category": "Cancellation",
+      "question": "What is your cancellation policy?",
+      "answer": "Please cancel or reschedule at least 24 hours in advance. Cancellations with less than 24 hours notice or no-shows may result in a $50 fee. Call us if you have special circumstances."
+    },
+    {
+      "category": "Cancellation",
+      "question": "Is there a fee for missing my appointment?",
+      "answer": "Yes, there's a $50 fee for no-shows without notice. However, we understand emergencies happen - please call us to discuss special circumstances."
+    },
+    {
+      "category": "Cancellation",
+      "question": "How do I cancel or reschedule my appointment?",
+      "answer": "You can cancel or reschedule by calling us at +1-555-123-4567, replying to your confirmation email, or through this chat. Please provide at least 24 hours notice."
+    },
+    {
+      "category": "Late Arrival",
+      "question": "What if I'm running late?",
+      "answer": "We have a 15-minute grace period. If you'll be more than 15 minutes late, please call ahead. We may need to reschedule to ensure quality care for all patients."
+    },
+    {
+      "category": "COVID",
+      "question": "What are your COVID-19 protocols?",
+      "answer": "We have modified protocols: masks are optional but available, hand sanitizer stations throughout, enhanced cleaning between patients, and telehealth options for non-emergency visits."
+    },
+    {
+      "category": "COVID",
+      "question": "Do I need to wear a mask?",
+      "answer": "Masks are optional but available upon request. We have hand sanitizer stations and maintain enhanced cleaning protocols."
+    },
+    {
+      "category": "COVID",
+      "question": "Do you offer telehealth appointments?",
+      "answer": "Yes! We offer telehealth/video visits for non-emergency appointments. Just let us know when scheduling and we'll set you up with a virtual visit."
+    },
+    {
+      "category": "Appointments",
+      "question": "How long is a general consultation?",
+      "answer": "A general consultation is 30 minutes. Follow-up visits are 15 minutes, physical exams are 45 minutes, and specialist consultations are 60 minutes."
+    },
+    {
+      "category": "Appointments",
+      "question": "What types of appointments do you offer?",
+      "answer": "We offer: General Consultations (30 min), Follow-up visits (15 min), Physical Exams (45 min), and Specialist Consultations (60 min)."
+    },
+    {
+      "category": "Urgent Care",
+      "question": "Do you handle emergencies?",
+      "answer": "For medical emergencies, please call 911 or go to the nearest emergency room. For urgent but non-emergency issues, call our office and we'll try to fit you in same-day."
+    },
+    {
+      "category": "Contact",
+      "question": "How can I contact the clinic?",
+      "answer": "Call us at +1-555-123-4567, email appointments@healthcareplus.com, or use this chat to schedule appointments. For urgent matters, please call."
+    }
+  ]
+}

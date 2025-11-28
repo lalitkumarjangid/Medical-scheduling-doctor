@@ -1,0 +1,116 @@
+{
+  "doctors": [
+    {
+      "id": "dr-001",
+      "name": "Dr. Sarah Johnson",
+      "specialty": "General Practice / Family Medicine",
+      "bio": "Dr. Johnson has over 15 years of experience in family medicine and is passionate about preventive care.",
+      "working_hours": {
+        "monday": {"start": "09:00", "end": "17:00", "lunch_start": "12:00", "lunch_end": "13:00"},
+        "tuesday": {"start": "09:00", "end": "17:00", "lunch_start": "12:00", "lunch_end": "13:00"},
+        "wednesday": {"start": "09:00", "end": "17:00", "lunch_start": "12:00", "lunch_end": "13:00"},
+        "thursday": {"start": "09:00", "end": "17:00", "lunch_start": "12:00", "lunch_end": "13:00"},
+        "friday": {"start": "09:00", "end": "16:00", "lunch_start": "12:00", "lunch_end": "13:00"},
+        "saturday": {"start": "09:00", "end": "13:00", "lunch_start": null, "lunch_end": null},
+        "sunday": null
+      },
+      "blocked_dates": [
+        "2025-12-25",
+        "2025-12-26",
+        "2026-01-01"
+      ],
+      "appointment_types": ["consultation", "followup", "physical"]
+    }
+  ],
+  "existing_appointments": [
+    {
+      "id": "APPT-2025-001",
+      "doctor_id": "dr-001",
+      "date": "2025-11-28",
+      "start_time": "09:00",
+      "end_time": "09:30",
+      "type": "consultation",
+      "patient_name": "John Smith"
+    },
+    {
+      "id": "APPT-2025-002",
+      "doctor_id": "dr-001",
+      "date": "2025-11-28",
+      "start_time": "10:00",
+      "end_time": "10:30",
+      "type": "consultation",
+      "patient_name": "Emily Brown"
+    },
+    {
+      "id": "APPT-2025-003",
+      "doctor_id": "dr-001",
+      "date": "2025-11-28",
+      "start_time": "14:00",
+      "end_time": "14:45",
+      "type": "physical",
+      "patient_name": "Michael Davis"
+    },
+    {
+      "id": "APPT-2025-004",
+      "doctor_id": "dr-001",
+      "date": "2025-11-29",
+      "start_time": "09:00",
+      "end_time": "09:30",
+      "type": "consultation",
+      "patient_name": "Sarah Wilson"
+    },
+    {
+      "id": "APPT-2025-005",
+      "doctor_id": "dr-001",
+      "date": "2025-11-29",
+      "start_time": "11:00",
+      "end_time": "11:15",
+      "type": "followup",
+      "patient_name": "Robert Taylor"
+    },
+    {
+      "id": "APPT-2025-006",
+      "doctor_id": "dr-001",
+      "date": "2025-12-01",
+      "start_time": "09:30",
+      "end_time": "10:30",
+      "type": "specialist",
+      "patient_name": "Jennifer Martinez"
+    },
+    {
+      "id": "APPT-2025-007",
+      "doctor_id": "dr-001",
+      "date": "2025-12-01",
+      "start_time": "14:00",
+      "end_time": "14:30",
+      "type": "consultation",
+      "patient_name": "David Anderson"
+    },
+    {
+      "id": "APPT-2025-008",
+      "doctor_id": "dr-001",
+      "date": "2025-12-02",
+      "start_time": "10:00",
+      "end_time": "10:45",
+      "type": "physical",
+      "patient_name": "Lisa Thompson"
+    },
+    {
+      "id": "APPT-2025-009",
+      "doctor_id": "dr-001",
+      "date": "2025-12-02",
+      "start_time": "15:00",
+      "end_time": "16:00",
+      "type": "specialist",
+      "patient_name": "James Garcia"
+    }
+  ],
+  "settings": {
+    "slot_interval_minutes": 30,
+    "buffer_between_appointments_minutes": 0,
+    "max_appointments_per_day": 16,
+    "booking_advance_days_min": 0,
+    "booking_advance_days_max": 60,
+    "timezone": "America/New_York"
+  }
+}
