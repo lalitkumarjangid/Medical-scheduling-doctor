@@ -2,6 +2,7 @@
 Booking tool for creating, canceling, and rescheduling appointments.
 """
 
+import os
 from typing import Dict, Optional
 import httpx
 from models.schemas import AppointmentType, BookingRequest, PatientInfo
@@ -18,6 +19,9 @@ class BookingTool:
             api_base_url: Base URL for the Calendly API endpoints
         """
         self.api_base_url = api_base_url
+        # Check if we're using real Calendly API
+        self.use_real_calendly = os.getenv("USE_REAL_CALENDLY", "false").lower() == "true"
+        self.calendly_endpoint = "/api/calendly-live" if self.use_real_calendly else "/api/calendly"
     
     async def book_appointment(
         self,
@@ -27,7 +31,8 @@ class BookingTool:
         patient_name: str,
         patient_email: str,
         patient_phone: str,
-        reason: str
+        reason: str,
+        scheduling_url: str = None
     ) -> Dict:
         """
         Book a new appointment.
@@ -40,44 +45,99 @@ class BookingTool:
             patient_email: Patient's email address
             patient_phone: Patient's phone number
             reason: Reason for the visit
+            scheduling_url: For real Calendly, the direct scheduling URL
             
         Returns:
             Dictionary with booking result
         """
         try:
-            booking_data = {
-                "appointment_type": appointment_type,
-                "date": date,
-                "start_time": start_time,
-                "patient": {
-                    "name": patient_name,
-                    "email": patient_email,
-                    "phone": patient_phone
-                },
-                "reason": reason
-            }
-            
             async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{self.api_base_url}/api/calendly/book",
-                    json=booking_data
-                )
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    return {
-                        "success": True,
-                        "booking_id": data.get("booking_id"),
-                        "confirmation_code": data.get("confirmation_code"),
-                        "status": data.get("status"),
-                        "details": data.get("details", {})
-                    }
+                if self.use_real_calendly:
+                    # For real Calendly, we provide the scheduling URL
+                    # The user must click this link to complete the booking
+                    # Calendly will then send confirmation emails automatically
+                    
+                    if scheduling_url:
+                        return {
+                            "success": True,
+                            "booking_id": None,
+                            "confirmation_code": None,
+                            "status": "pending_user_action",
+                            "details": {
+                                "date": date,
+                                "time": start_time,
+                                "patient_name": patient_name,
+                                "patient_email": patient_email,
+                                "reason": reason
+                            },
+                            "scheduling_url": scheduling_url,
+                            "message": "Please click the link below to complete your booking. Calendly will send you a confirmation email once booked."
+                        }
+                    else:
+                        # Try to get a scheduling link
+                        response = await client.get(
+                            f"{self.api_base_url}/api/calendly-live/event-types"
+                        )
+                        if response.status_code == 200:
+                            data = response.json()
+                            event_types = data.get("event_types", [])
+                            if event_types:
+                                scheduling_url = event_types[0].get("scheduling_url")
+                                return {
+                                    "success": True,
+                                    "booking_id": None,
+                                    "confirmation_code": None,
+                                    "status": "pending_user_action",
+                                    "details": {
+                                        "date": date,
+                                        "time": start_time,
+                                        "patient_name": patient_name,
+                                        "patient_email": patient_email,
+                                        "reason": reason
+                                    },
+                                    "scheduling_url": scheduling_url,
+                                    "message": "Please click the link to complete your booking on Calendly."
+                                }
+                        
+                        return {
+                            "success": False,
+                            "error": "Could not get Calendly scheduling link"
+                        }
                 else:
-                    error_detail = response.json().get("detail", "Booking failed")
-                    return {
-                        "success": False,
-                        "error": error_detail
+                    # Use mock Calendly API
+                    booking_data = {
+                        "appointment_type": appointment_type,
+                        "date": date,
+                        "start_time": start_time,
+                        "patient": {
+                            "name": patient_name,
+                            "email": patient_email,
+                            "phone": patient_phone
+                        },
+                        "reason": reason
                     }
+                    
+                    response = await client.post(
+                        f"{self.api_base_url}/api/calendly/book",
+                        json=booking_data
+                    )
+                
+                    if response.status_code == 200:
+                        data = response.json()
+                        return {
+                            "success": True,
+                            "booking_id": data.get("booking_id"),
+                            "confirmation_code": data.get("confirmation_code"),
+                            "status": data.get("status"),
+                            "details": data.get("details", {}),
+                            "scheduling_url": None
+                        }
+                    else:
+                        error_detail = response.json().get("detail", "Booking failed")
+                        return {
+                            "success": False,
+                            "error": error_detail
+                        }
         except Exception as e:
             return {
                 "success": False,

@@ -28,6 +28,7 @@ else:
 
 # Import routers
 from api.calendly_integration import router as calendly_router
+from api.calendly_real import router as calendly_real_router
 from api.chat import router as chat_router
 from rag.faq_rag import get_faq_rag
 
@@ -95,8 +96,16 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(calendly_router)
+app.include_router(calendly_router)  # Mock Calendly API (always available)
 app.include_router(chat_router)
+
+# Conditionally include real Calendly API
+use_real_calendly = os.getenv("USE_REAL_CALENDLY", "false").lower() == "true"
+if use_real_calendly:
+    app.include_router(calendly_real_router)  # Real Calendly API
+    print("📅 Using REAL Calendly API integration")
+else:
+    print("📅 Using MOCK Calendly API (set USE_REAL_CALENDLY=true to use real API)")
 
 
 @app.get("/")

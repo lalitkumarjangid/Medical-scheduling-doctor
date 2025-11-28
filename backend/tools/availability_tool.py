@@ -2,6 +2,7 @@
 Availability tool for checking doctor's available time slots.
 """
 
+import os
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 import httpx
@@ -19,6 +20,33 @@ class AvailabilityTool:
             api_base_url: Base URL for the Calendly API endpoints
         """
         self.api_base_url = api_base_url
+        # Check if we're using real Calendly API
+        self.use_real_calendly = os.getenv("USE_REAL_CALENDLY", "false").lower() == "true"
+        self.calendly_endpoint = "/api/calendly-live" if self.use_real_calendly else "/api/calendly"
+        self._event_type_uri = None  # Cache event type URI for real Calendly
+    
+    async def _get_default_event_type_uri(self) -> str:
+        """Get the default event type URI from real Calendly."""
+        if self._event_type_uri:
+            return self._event_type_uri
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{self.api_base_url}/api/calendly-live/event-types"
+            )
+            if response.status_code == 200:
+                data = response.json()
+                event_types = data.get("event_types", [])
+                if event_types:
+                    # Use the first active event type
+                    for et in event_types:
+                        if et.get("active"):
+                            self._event_type_uri = et.get("uri")
+                            return self._event_type_uri
+                    # Fallback to first event type
+                    self._event_type_uri = event_types[0].get("uri")
+                    return self._event_type_uri
+        return ""
     
     async def get_available_slots(
         self,
@@ -35,32 +63,81 @@ class AvailabilityTool:
         Returns:
             Dictionary with available slots and metadata
         """
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{self.api_base_url}/api/calendly/availability",
-                params={"date": date, "appointment_type": appointment_type}
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                # Filter to only available slots
-                available_only = [
-                    slot for slot in data.get("available_slots", [])
-                    if slot.get("available", False)
-                ]
-                return {
-                    "success": True,
-                    "date": data.get("date"),
-                    "appointment_type": data.get("appointment_type"),
-                    "duration_minutes": data.get("duration_minutes"),
-                    "available_slots": available_only,
-                    "total_available": len(available_only)
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": response.json().get("detail", "Failed to fetch availability")
-                }
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                if self.use_real_calendly:
+                    # Get event type URI first
+                    event_type_uri = await self._get_default_event_type_uri()
+                    if not event_type_uri:
+                        return {
+                            "success": False,
+                            "error": "No event types configured in Calendly"
+                        }
+                    
+                    # Use real Calendly API
+                    url = f"{self.api_base_url}/api/calendly-live/availability"
+                    params = {"event_type_uri": event_type_uri, "date": date, "days": 1}
+                    response = await client.get(url, params=params)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        # Convert real Calendly format to our expected format
+                        availability = data.get("availability", {})
+                        available_slots = []
+                        for date_key, slots in availability.items():
+                            for slot in slots:
+                                available_slots.append({
+                                    "start_time": slot.get("start_time"),
+                                    "end_time": "",  # Calculate if needed
+                                    "available": True,
+                                    "scheduling_url": slot.get("scheduling_url")
+                                })
+                        
+                        return {
+                            "success": True,
+                            "date": date,
+                            "appointment_type": appointment_type,
+                            "duration_minutes": 30,  # Default for real Calendly
+                            "available_slots": available_slots,
+                            "total_available": len(available_slots)
+                        }
+                    else:
+                        return {
+                            "success": False,
+                            "error": response.json().get("detail", "Failed to fetch availability")
+                        }
+                else:
+                    # Use mock Calendly API
+                    response = await client.get(
+                        f"{self.api_base_url}/api/calendly/availability",
+                        params={"date": date, "appointment_type": appointment_type}
+                    )
+                
+                    if response.status_code == 200:
+                        data = response.json()
+                        # Filter to only available slots
+                        available_only = [
+                            slot for slot in data.get("available_slots", [])
+                            if slot.get("available", False)
+                        ]
+                        return {
+                            "success": True,
+                            "date": data.get("date"),
+                            "appointment_type": data.get("appointment_type"),
+                            "duration_minutes": data.get("duration_minutes"),
+                            "available_slots": available_only,
+                            "total_available": len(available_only)
+                        }
+                    else:
+                        return {
+                            "success": False,
+                            "error": response.json().get("detail", "Failed to fetch availability")
+                        }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
     
     async def get_available_dates(
         self,

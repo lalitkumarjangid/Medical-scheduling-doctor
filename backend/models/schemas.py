@@ -133,8 +133,14 @@ class ConversationState(BaseModel):
     reason_for_visit: Optional[str] = None
     messages: List[ChatMessage] = []
     pending_faq: bool = False  # True if we need to return to scheduling after FAQ
+    available_slots: Optional[List[dict]] = None  # Store available slots for reference
+    scheduling_url: Optional[str] = None  # For real Calendly bookings
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
+    
+    class Config:
+        # Allow setting extra attributes dynamically
+        extra = "allow"
 
 
 # RAG Models
