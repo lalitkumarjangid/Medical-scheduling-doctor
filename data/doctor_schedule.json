@@ -4,12 +4,7 @@
       "id": "dr-001",
       "name": "Dr. Sarah Johnson",
       "specialty": "General Practice / Family Medicine",
-      "qualifications": "MD, FAAFP",
-      "experience_years": 15,
-      "bio": "Dr. Johnson has over 15 years of experience in family medicine and is passionate about preventive care and chronic disease management.",
-      "languages": ["English", "Spanish"],
-      "rating": 4.9,
-      "reviews_count": 328,
+      "bio": "Dr. Johnson has over 15 years of experience in family medicine and is passionate about preventive care.",
       "working_hours": {
         "monday": {"start": "09:00", "end": "17:00", "lunch_start": "12:00", "lunch_end": "13:00"},
         "tuesday": {"start": "09:00", "end": "17:00", "lunch_start": "12:00", "lunch_end": "13:00"},
@@ -19,190 +14,96 @@
         "saturday": {"start": "09:00", "end": "13:00", "lunch_start": null, "lunch_end": null},
         "sunday": null
       },
-      "blocked_dates": ["2025-12-25", "2025-12-26", "2026-01-01"],
+      "blocked_dates": [
+        "2025-12-25",
+        "2025-12-26",
+        "2026-01-01"
+      ],
       "appointment_types": ["consultation", "followup", "physical"]
-    },
-    {
-      "id": "dr-002",
-      "name": "Dr. Michael Chen",
-      "specialty": "Internal Medicine",
-      "qualifications": "MD, Board Certified Internal Medicine",
-      "experience_years": 12,
-      "bio": "Dr. Chen specializes in adult medicine with expertise in diabetes management, hypertension, and preventive health screenings.",
-      "languages": ["English", "Mandarin", "Cantonese"],
-      "rating": 4.8,
-      "reviews_count": 256,
-      "working_hours": {
-        "monday": {"start": "08:00", "end": "16:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "tuesday": {"start": "08:00", "end": "16:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "wednesday": {"start": "10:00", "end": "18:00", "lunch_start": "13:00", "lunch_end": "14:00"},
-        "thursday": {"start": "08:00", "end": "16:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "friday": {"start": "08:00", "end": "15:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "saturday": null,
-        "sunday": null
-      },
-      "blocked_dates": ["2025-12-25", "2025-12-31", "2026-01-01"],
-      "appointment_types": ["consultation", "followup", "physical", "specialist"]
-    },
-    {
-      "id": "dr-003",
-      "name": "Dr. Emily Rodriguez",
-      "specialty": "Pediatrics",
-      "qualifications": "MD, FAAP, Board Certified Pediatrician",
-      "experience_years": 10,
-      "bio": "Dr. Rodriguez is dedicated to providing comprehensive care for children from newborns to adolescents.",
-      "languages": ["English", "Spanish", "Portuguese"],
-      "rating": 4.9,
-      "reviews_count": 412,
-      "working_hours": {
-        "monday": {"start": "08:00", "end": "17:00", "lunch_start": "12:30", "lunch_end": "13:30"},
-        "tuesday": {"start": "08:00", "end": "17:00", "lunch_start": "12:30", "lunch_end": "13:30"},
-        "wednesday": {"start": "08:00", "end": "17:00", "lunch_start": "12:30", "lunch_end": "13:30"},
-        "thursday": {"start": "08:00", "end": "17:00", "lunch_start": "12:30", "lunch_end": "13:30"},
-        "friday": {"start": "08:00", "end": "16:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "saturday": {"start": "09:00", "end": "12:00", "lunch_start": null, "lunch_end": null},
-        "sunday": null
-      },
-      "blocked_dates": ["2025-12-25", "2025-12-26", "2026-01-01"],
-      "appointment_types": ["consultation", "followup", "physical"]
-    },
-    {
-      "id": "dr-004",
-      "name": "Dr. James Wilson",
-      "specialty": "Cardiology",
-      "qualifications": "MD, FACC, Board Certified Cardiologist",
-      "experience_years": 20,
-      "bio": "Dr. Wilson is a renowned cardiologist with expertise in heart disease prevention and treatment.",
-      "languages": ["English"],
-      "rating": 4.7,
-      "reviews_count": 189,
-      "working_hours": {
-        "monday": {"start": "09:00", "end": "17:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "tuesday": {"start": "09:00", "end": "17:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "wednesday": null,
-        "thursday": {"start": "09:00", "end": "17:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "friday": {"start": "09:00", "end": "15:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "saturday": null,
-        "sunday": null
-      },
-      "blocked_dates": ["2025-12-25", "2025-12-26", "2025-12-27", "2026-01-01"],
-      "appointment_types": ["consultation", "followup", "specialist"]
-    },
-    {
-      "id": "dr-005",
-      "name": "Dr. Priya Patel",
-      "specialty": "Dermatology",
-      "qualifications": "MD, Board Certified Dermatologist",
-      "experience_years": 8,
-      "bio": "Dr. Patel specializes in medical and cosmetic dermatology, treating conditions from acne to skin cancer.",
-      "languages": ["English", "Hindi", "Gujarati"],
-      "rating": 4.8,
-      "reviews_count": 234,
-      "working_hours": {
-        "monday": {"start": "10:00", "end": "18:00", "lunch_start": "13:00", "lunch_end": "14:00"},
-        "tuesday": {"start": "10:00", "end": "18:00", "lunch_start": "13:00", "lunch_end": "14:00"},
-        "wednesday": {"start": "10:00", "end": "18:00", "lunch_start": "13:00", "lunch_end": "14:00"},
-        "thursday": {"start": "10:00", "end": "18:00", "lunch_start": "13:00", "lunch_end": "14:00"},
-        "friday": {"start": "09:00", "end": "16:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "saturday": {"start": "10:00", "end": "14:00", "lunch_start": null, "lunch_end": null},
-        "sunday": null
-      },
-      "blocked_dates": ["2025-12-25", "2026-01-01"],
-      "appointment_types": ["consultation", "followup", "specialist"]
-    },
-    {
-      "id": "dr-006",
-      "name": "Dr. Robert Thompson",
-      "specialty": "Orthopedics",
-      "qualifications": "MD, Board Certified Orthopedic Surgeon",
-      "experience_years": 18,
-      "bio": "Dr. Thompson is an orthopedic specialist focusing on sports medicine and joint replacement.",
-      "languages": ["English", "German"],
-      "rating": 4.9,
-      "reviews_count": 276,
-      "working_hours": {
-        "monday": {"start": "08:00", "end": "16:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "tuesday": {"start": "08:00", "end": "16:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "wednesday": {"start": "08:00", "end": "16:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "thursday": null,
-        "friday": {"start": "08:00", "end": "14:00", "lunch_start": "12:00", "lunch_end": "12:30"},
-        "saturday": null,
-        "sunday": null
-      },
-      "blocked_dates": ["2025-12-25", "2025-12-26", "2026-01-01", "2026-01-02"],
-      "appointment_types": ["consultation", "followup", "specialist"]
-    },
-    {
-      "id": "dr-007",
-      "name": "Dr. Lisa Kim",
-      "specialty": "OB/GYN",
-      "qualifications": "MD, FACOG, Board Certified OB/GYN",
-      "experience_years": 14,
-      "bio": "Dr. Kim provides comprehensive women's health services including prenatal care and gynecological exams.",
-      "languages": ["English", "Korean"],
-      "rating": 4.9,
-      "reviews_count": 389,
-      "working_hours": {
-        "monday": {"start": "08:00", "end": "17:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "tuesday": {"start": "08:00", "end": "17:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "wednesday": {"start": "08:00", "end": "17:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "thursday": {"start": "08:00", "end": "17:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "friday": {"start": "08:00", "end": "15:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "saturday": null,
-        "sunday": null
-      },
-      "blocked_dates": ["2025-12-25", "2025-12-26", "2026-01-01"],
-      "appointment_types": ["consultation", "followup", "physical", "specialist"]
-    },
-    {
-      "id": "dr-008",
-      "name": "Dr. David Martinez",
-      "specialty": "Neurology",
-      "qualifications": "MD, Board Certified Neurologist",
-      "experience_years": 16,
-      "bio": "Dr. Martinez specializes in treating neurological disorders including headaches, epilepsy, and stroke.",
-      "languages": ["English", "Spanish"],
-      "rating": 4.8,
-      "reviews_count": 198,
-      "working_hours": {
-        "monday": {"start": "09:00", "end": "17:00", "lunch_start": "12:30", "lunch_end": "13:30"},
-        "tuesday": null,
-        "wednesday": {"start": "09:00", "end": "17:00", "lunch_start": "12:30", "lunch_end": "13:30"},
-        "thursday": {"start": "09:00", "end": "17:00", "lunch_start": "12:30", "lunch_end": "13:30"},
-        "friday": {"start": "09:00", "end": "16:00", "lunch_start": "12:00", "lunch_end": "13:00"},
-        "saturday": null,
-        "sunday": null
-      },
-      "blocked_dates": ["2025-12-25", "2025-12-26", "2025-12-31", "2026-01-01"],
-      "appointment_types": ["consultation", "followup", "specialist"]
     }
   ],
   "existing_appointments": [
-    {"id": "APPT-2025-001", "doctor_id": "dr-001", "date": "2025-11-28", "start_time": "09:00", "end_time": "09:30", "type": "consultation", "patient_name": "John Smith", "patient_email": "john.smith@email.com", "patient_phone": "555-0101", "reason": "Annual checkup", "status": "confirmed", "confirmation_code": "HC28NOV001"},
-    {"id": "APPT-2025-002", "doctor_id": "dr-001", "date": "2025-11-28", "start_time": "10:00", "end_time": "10:30", "type": "consultation", "patient_name": "Emily Brown", "patient_email": "emily.brown@email.com", "patient_phone": "555-0102", "reason": "Cold symptoms", "status": "confirmed", "confirmation_code": "HC28NOV002"},
-    {"id": "APPT-2025-003", "doctor_id": "dr-001", "date": "2025-11-28", "start_time": "14:00", "end_time": "14:45", "type": "physical", "patient_name": "Michael Davis", "patient_email": "m.davis@email.com", "patient_phone": "555-0103", "reason": "Annual physical exam", "status": "confirmed", "confirmation_code": "HC28NOV003"},
-    {"id": "APPT-2025-004", "doctor_id": "dr-002", "date": "2025-11-28", "start_time": "09:00", "end_time": "09:30", "type": "consultation", "patient_name": "Susan Lee", "patient_email": "susan.lee@email.com", "patient_phone": "555-0104", "reason": "Diabetes management", "status": "confirmed", "confirmation_code": "HC28NOV004"},
-    {"id": "APPT-2025-005", "doctor_id": "dr-002", "date": "2025-11-28", "start_time": "11:00", "end_time": "11:30", "type": "followup", "patient_name": "Robert Taylor", "patient_email": "r.taylor@email.com", "patient_phone": "555-0105", "reason": "Blood pressure follow-up", "status": "confirmed", "confirmation_code": "HC28NOV005"},
-    {"id": "APPT-2025-006", "doctor_id": "dr-003", "date": "2025-11-28", "start_time": "09:00", "end_time": "09:30", "type": "consultation", "patient_name": "Baby Emma Wilson", "patient_email": "wilson.family@email.com", "patient_phone": "555-0106", "reason": "6-month checkup", "status": "confirmed", "confirmation_code": "HC28NOV006"},
-    {"id": "APPT-2025-007", "doctor_id": "dr-003", "date": "2025-11-28", "start_time": "10:30", "end_time": "11:00", "type": "consultation", "patient_name": "Tommy Anderson", "patient_email": "anderson.family@email.com", "patient_phone": "555-0107", "reason": "Ear infection", "status": "confirmed", "confirmation_code": "HC28NOV007"},
-    {"id": "APPT-2025-008", "doctor_id": "dr-004", "date": "2025-11-28", "start_time": "10:00", "end_time": "11:00", "type": "specialist", "patient_name": "George Harrison", "patient_email": "g.harrison@email.com", "patient_phone": "555-0108", "reason": "Heart palpitations", "status": "confirmed", "confirmation_code": "HC28NOV008"},
-    {"id": "APPT-2025-009", "doctor_id": "dr-005", "date": "2025-11-28", "start_time": "11:00", "end_time": "11:30", "type": "consultation", "patient_name": "Maria Garcia", "patient_email": "m.garcia@email.com", "patient_phone": "555-0109", "reason": "Skin rash", "status": "confirmed", "confirmation_code": "HC28NOV009"},
-    {"id": "APPT-2025-010", "doctor_id": "dr-005", "date": "2025-11-28", "start_time": "14:00", "end_time": "15:00", "type": "specialist", "patient_name": "James Wilson Jr", "patient_email": "j.wilson@email.com", "patient_phone": "555-0110", "reason": "Acne treatment", "status": "confirmed", "confirmation_code": "HC28NOV010"},
-    {"id": "APPT-2025-011", "doctor_id": "dr-006", "date": "2025-11-28", "start_time": "09:00", "end_time": "10:00", "type": "specialist", "patient_name": "Alex Rodriguez", "patient_email": "a.rodriguez@email.com", "patient_phone": "555-0111", "reason": "Knee pain evaluation", "status": "confirmed", "confirmation_code": "HC28NOV011"},
-    {"id": "APPT-2025-012", "doctor_id": "dr-007", "date": "2025-11-28", "start_time": "09:30", "end_time": "10:30", "type": "specialist", "patient_name": "Jennifer Martinez", "patient_email": "j.martinez@email.com", "patient_phone": "555-0112", "reason": "Prenatal checkup", "status": "confirmed", "confirmation_code": "HC28NOV012"},
-    {"id": "APPT-2025-013", "doctor_id": "dr-007", "date": "2025-11-28", "start_time": "14:00", "end_time": "14:30", "type": "consultation", "patient_name": "Sarah Thompson", "patient_email": "s.thompson@email.com", "patient_phone": "555-0113", "reason": "Annual well-woman exam", "status": "confirmed", "confirmation_code": "HC28NOV013"},
-    {"id": "APPT-2025-014", "doctor_id": "dr-008", "date": "2025-11-28", "start_time": "10:00", "end_time": "11:00", "type": "specialist", "patient_name": "William Brown", "patient_email": "w.brown@email.com", "patient_phone": "555-0114", "reason": "Chronic headaches", "status": "confirmed", "confirmation_code": "HC28NOV014"},
-    {"id": "APPT-2025-015", "doctor_id": "dr-001", "date": "2025-11-29", "start_time": "09:00", "end_time": "09:30", "type": "consultation", "patient_name": "Sarah Wilson", "patient_email": "s.wilson@email.com", "patient_phone": "555-0115", "reason": "Flu symptoms", "status": "confirmed", "confirmation_code": "HC29NOV001"},
-    {"id": "APPT-2025-016", "doctor_id": "dr-001", "date": "2025-11-29", "start_time": "11:00", "end_time": "11:15", "type": "followup", "patient_name": "Robert Taylor", "patient_email": "r.taylor@email.com", "patient_phone": "555-0105", "reason": "Medication check", "status": "confirmed", "confirmation_code": "HC29NOV002"},
-    {"id": "APPT-2025-017", "doctor_id": "dr-003", "date": "2025-11-29", "start_time": "10:00", "end_time": "10:30", "type": "consultation", "patient_name": "Lucy Chen", "patient_email": "chen.family@email.com", "patient_phone": "555-0116", "reason": "Vaccination", "status": "confirmed", "confirmation_code": "HC29NOV003"},
-    {"id": "APPT-2025-018", "doctor_id": "dr-005", "date": "2025-11-29", "start_time": "11:00", "end_time": "11:30", "type": "followup", "patient_name": "Maria Garcia", "patient_email": "m.garcia@email.com", "patient_phone": "555-0109", "reason": "Rash follow-up", "status": "confirmed", "confirmation_code": "HC29NOV004"},
-    {"id": "APPT-2025-019", "doctor_id": "dr-002", "date": "2025-12-01", "start_time": "09:30", "end_time": "10:30", "type": "specialist", "patient_name": "Jennifer Martinez", "patient_email": "j.martinez@email.com", "patient_phone": "555-0112", "reason": "Health review", "status": "confirmed", "confirmation_code": "HC01DEC001"},
-    {"id": "APPT-2025-020", "doctor_id": "dr-002", "date": "2025-12-01", "start_time": "14:00", "end_time": "14:30", "type": "consultation", "patient_name": "David Anderson", "patient_email": "d.anderson@email.com", "patient_phone": "555-0117", "reason": "Cholesterol concerns", "status": "confirmed", "confirmation_code": "HC01DEC002"},
-    {"id": "APPT-2025-021", "doctor_id": "dr-004", "date": "2025-12-01", "start_time": "09:00", "end_time": "10:00", "type": "specialist", "patient_name": "Richard White", "patient_email": "r.white@email.com", "patient_phone": "555-0118", "reason": "Post-surgery follow-up", "status": "confirmed", "confirmation_code": "HC01DEC003"},
-    {"id": "APPT-2025-022", "doctor_id": "dr-006", "date": "2025-12-01", "start_time": "10:00", "end_time": "11:00", "type": "specialist", "patient_name": "Lisa Thompson", "patient_email": "l.thompson@email.com", "patient_phone": "555-0119", "reason": "Hip pain", "status": "confirmed", "confirmation_code": "HC01DEC004"},
-    {"id": "APPT-2025-023", "doctor_id": "dr-008", "date": "2025-12-01", "start_time": "14:00", "end_time": "15:00", "type": "specialist", "patient_name": "James Garcia", "patient_email": "j.garcia@email.com", "patient_phone": "555-0120", "reason": "Migraine treatment", "status": "confirmed", "confirmation_code": "HC01DEC005"},
-    {"id": "APPT-2025-024", "doctor_id": "dr-001", "date": "2025-12-02", "start_time": "10:00", "end_time": "10:45", "type": "physical", "patient_name": "Lisa Thompson", "patient_email": "l.thompson@email.com", "patient_phone": "555-0119", "reason": "Annual physical", "status": "confirmed", "confirmation_code": "HC02DEC001"},
-    {"id": "APPT-2025-025", "doctor_id": "dr-002", "date": "2025-12-02", "start_time": "09:00", "end_time": "09:30", "type": "followup", "patient_name": "Susan Lee", "patient_email": "susan.lee@email.com", "patient_phone": "555-0104", "reason": "Diabetes check", "status": "confirmed", "confirmation_code": "HC02DEC002"}
+    {
+      "id": "APPT-2025-001",
+      "doctor_id": "dr-001",
+      "date": "2025-11-28",
+      "start_time": "09:00",
+      "end_time": "09:30",
+      "type": "consultation",
+      "patient_name": "John Smith"
+    },
+    {
+      "id": "APPT-2025-002",
+      "doctor_id": "dr-001",
+      "date": "2025-11-28",
+      "start_time": "10:00",
+      "end_time": "10:30",
+      "type": "consultation",
+      "patient_name": "Emily Brown"
+    },
+    {
+      "id": "APPT-2025-003",
+      "doctor_id": "dr-001",
+      "date": "2025-11-28",
+      "start_time": "14:00",
+      "end_time": "14:45",
+      "type": "physical",
+      "patient_name": "Michael Davis"
+    },
+    {
+      "id": "APPT-2025-004",
+      "doctor_id": "dr-001",
+      "date": "2025-11-29",
+      "start_time": "09:00",
+      "end_time": "09:30",
+      "type": "consultation",
+      "patient_name": "Sarah Wilson"
+    },
+    {
+      "id": "APPT-2025-005",
+      "doctor_id": "dr-001",
+      "date": "2025-11-29",
+      "start_time": "11:00",
+      "end_time": "11:15",
+      "type": "followup",
+      "patient_name": "Robert Taylor"
+    },
+    {
+      "id": "APPT-2025-006",
+      "doctor_id": "dr-001",
+      "date": "2025-12-01",
+      "start_time": "09:30",
+      "end_time": "10:30",
+      "type": "specialist",
+      "patient_name": "Jennifer Martinez"
+    },
+    {
+      "id": "APPT-2025-007",
+      "doctor_id": "dr-001",
+      "date": "2025-12-01",
+      "start_time": "14:00",
+      "end_time": "14:30",
+      "type": "consultation",
+      "patient_name": "David Anderson"
+    },
+    {
+      "id": "APPT-2025-008",
+      "doctor_id": "dr-001",
+      "date": "2025-12-02",
+      "start_time": "10:00",
+      "end_time": "10:45",
+      "type": "physical",
+      "patient_name": "Lisa Thompson"
+    },
+    {
+      "id": "APPT-2025-009",
+      "doctor_id": "dr-001",
+      "date": "2025-12-02",
+      "start_time": "15:00",
+      "end_time": "16:00",
+      "type": "specialist",
+      "patient_name": "James Garcia"
+    }
   ],
   "settings": {
     "slot_interval_minutes": 30,

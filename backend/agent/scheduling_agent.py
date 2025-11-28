@@ -156,21 +156,9 @@ class SchedulingAgent:
         if "reschedule" in message_lower or "change" in message_lower and "appointment" in message_lower:
             return Intent.RESCHEDULE, entities
         
-        # Check for date/time preference before checking confirm intent
-        # This ensures "Tomorrow morning would be great" is treated as date selection
-        date = parse_date_reference(message)
-        time_pref = parse_time_preference(message)
-        if date or time_pref != "any":
-            entities["date"] = date
-            entities["time_preference"] = time_pref
-            if current_phase in [ConversationPhase.UNDERSTANDING_NEEDS.value, 
-                                 ConversationPhase.COLLECTING_PREFERENCES.value,
-                                 ConversationPhase.SLOT_RECOMMENDATION.value]:
-                return Intent.PROVIDE_INFO, entities
-        
-        # Confirm intent - only match when not providing date/time info
-        confirm_words = ["yes", "confirm", "book it", "sounds good", "perfect", "let's do it", "that works"]
-        if any(cw in message_lower for cw in confirm_words) and not date:
+        # Confirm intent
+        confirm_words = ["yes", "confirm", "book it", "sounds good", "perfect", "great", "let's do it", "that works"]
+        if any(cw in message_lower for cw in confirm_words):
             return Intent.CONFIRM, entities
         
         # Decline intent
@@ -251,28 +239,16 @@ class SchedulingAgent:
             else:
                 model = self.llm_model
             
-            # Use async wrapper for Gemini with safety settings
+            # Use async wrapper for Gemini
             response = await asyncio.to_thread(
                 lambda: model.generate_content(
                     gemini_messages,
                     generation_config=genai.types.GenerationConfig(
                         temperature=0.7,
                         max_output_tokens=500
-                    ),
-                    safety_settings={
-                        'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
-                        'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
-                        'HARM_CATEGORY_SEXUALLY_EXPLICIT': 'BLOCK_NONE',
-                        'HARM_CATEGORY_DANGEROUS_CONTENT': 'BLOCK_NONE',
-                    }
+                    )
                 )
             )
-            
-            # Check if response has valid text
-            if response.candidates and len(response.candidates) > 0:
-                candidate = response.candidates[0]
-                if candidate.content and candidate.content.parts:
-                    return candidate.content.parts[0].text
             
             return response.text
         except Exception as e:
@@ -311,31 +287,16 @@ class SchedulingAgent:
             if context:
                 prompt = f"[CONTEXT: {context}]\n\nUser message: {message}"
             
-            # Generate response with safety settings
+            # Generate response
             response = await asyncio.to_thread(
                 lambda: chat.send_message(
                     prompt,
                     generation_config=genai.types.GenerationConfig(
                         temperature=0.7,
                         max_output_tokens=500
-                    ),
-                    safety_settings={
-                        'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE',
-                        'HARM_CATEGORY_HATE_SPEECH': 'BLOCK_NONE',
-                        'HARM_CATEGORY_SEXUALLY_EXPLICIT': 'BLOCK_NONE',
-                        'HARM_CATEGORY_DANGEROUS_CONTENT': 'BLOCK_NONE',
-                    }
+                    )
                 )
             )
-            
-            # Check if response has valid text
-            if response.candidates and len(response.candidates) > 0:
-                candidate = response.candidates[0]
-                if candidate.content and candidate.content.parts:
-                    return candidate.content.parts[0].text
-                elif candidate.finish_reason:
-                    print(f"Gemini finish_reason: {candidate.finish_reason}")
-                    return self._generate_contextual_fallback(message, context)
             
             return response.text
         except Exception as e:
@@ -346,34 +307,13 @@ class SchedulingAgent:
         """Generate a fallback response when LLM is unavailable."""
         return "I'd be happy to help you schedule an appointment or answer questions about our clinic. What can I help you with today?"
     
-    def _generate_contextual_fallback(self, message: str, context: Optional[str] = None) -> str:
-        """Generate a contextual fallback response based on the conversation context."""
-        message_lower = message.lower()
-        
-        # Check for scheduling-related messages
-        if any(word in message_lower for word in ["schedule", "book", "appointment", "see doctor"]):
-            if context and "Available" in context:
-                return "I can help you schedule an appointment! Here are our available time slots. Please let me know which date and time works best for you, and I'll also need to know the reason for your visit."
-            return "I'd be happy to help you schedule an appointment! Could you tell me what brings you in today, and when you'd prefer to come in?"
-        
-        # Check for greeting
-        if any(word in message_lower for word in ["hi", "hello", "hey", "good morning", "good afternoon"]):
-            return "Hello! Welcome to HealthCare Plus Clinic. I can help you schedule an appointment or answer questions about our services. How can I assist you today?"
-        
-        # Check for time/date related
-        if any(word in message_lower for word in ["morning", "afternoon", "tomorrow", "today", "monday", "tuesday", "wednesday", "thursday", "friday"]):
-            return "Let me check our availability for that time. Could you also tell me the reason for your visit so I can book the right type of appointment for you?"
-        
-        # Default
-        return "I'd be happy to help you schedule an appointment or answer questions about our clinic. What can I help you with today?"
-    
     async def process_message(
         self,
         message: str,
         session_id: Optional[str] = None
     ) -> Dict:
         """
-        Process a user message and generate a response using Gemini.
+        Process a user message and generate a response.
         
         Args:
             message: User's message
@@ -395,14 +335,8 @@ class SchedulingAgent:
         # Classify intent
         intent, entities = await self.classify_intent(message, state.phase.value)
         
-        # Build context based on intent
-        context = await self._build_context_for_intent(intent, entities, message, state)
-        
-        # Get response from Gemini with context
-        response = await self.chat_with_gemini(message, state.session_id, context)
-        
-        # Update state based on intent (for tracking conversation flow)
-        await self._update_state_for_intent(intent, entities, message, state)
+        # Handle based on intent and phase
+        response = await self._handle_intent(intent, entities, message, state)
         
         # Add assistant message to history
         state.messages.append(ChatMessage(
@@ -422,376 +356,225 @@ class SchedulingAgent:
             "booking_status": self._get_booking_status(state)
         }
     
-    async def _build_context_for_intent(
+    async def _handle_intent(
         self,
         intent: Intent,
         entities: Dict,
         message: str,
         state: ConversationState
     ) -> str:
-        """Build context string for Gemini based on intent and state."""
-        
-        context_parts = []
-        
-        # Add current conversation phase
-        context_parts.append(f"Current conversation phase: {state.phase.value}")
+        """Handle user intent based on conversation phase."""
         
         if intent == Intent.GREETING:
-            context_parts.append(
-                "The user is greeting. Welcome them warmly to HealthCare Plus Clinic. "
-                "Offer to help with scheduling appointments or answering questions."
-            )
+            return await self._handle_greeting(state)
         
         elif intent == Intent.FAQ:
-            # Get FAQ answer from RAG
-            faq_answer = self.faq_rag.format_answer_for_chat(message)
-            context_parts.append(f"FAQ Information from knowledge base:\n{faq_answer}")
-            context_parts.append("Answer the user's question based on this information. Be helpful and concise.")
-            
-            if state.phase in [ConversationPhase.UNDERSTANDING_NEEDS, ConversationPhase.COLLECTING_PREFERENCES, 
-                              ConversationPhase.SLOT_RECOMMENDATION, ConversationPhase.COLLECTING_INFO]:
-                context_parts.append("After answering, offer to continue with their appointment scheduling.")
+            return await self._handle_faq(message, state)
         
         elif intent == Intent.SCHEDULE:
-            # Get available slots for the next few days to show to user
-            available_slots_info = await self._get_upcoming_available_slots()
-            context_parts.append(
-                "The user wants to schedule an appointment. "
-                "Ask about the reason for their visit AND immediately show them the available slots below. "
-                "You MUST include the available slots in your response."
-            )
-            context_parts.append(f"\n=== AVAILABLE APPOINTMENT SLOTS (INCLUDE THESE IN YOUR RESPONSE) ===\n{available_slots_info}\n===")
-            context_parts.append(
-                "IMPORTANT: Show ALL these available slots to the user with dates and times formatted nicely. "
-                "Ask what brings them in and which slot works for them."
-            )
-            if entities.get("date"):
-                context_parts.append(f"User mentioned date preference: {entities['date']}")
-            if entities.get("time_preference"):
-                context_parts.append(f"User mentioned time preference: {entities['time_preference']}")
-        
-        elif intent == Intent.PROVIDE_INFO:
-            # User is providing information during booking
-            if state.phase == ConversationPhase.UNDERSTANDING_NEEDS:
-                # Check if date/time preference was provided along with reason
-                if entities.get("date") or entities.get("time_preference"):
-                    # Reason already understood, now get availability
-                    date = entities.get("date") or datetime.now().strftime("%Y-%m-%d")
-                    result = await self.availability_tool.get_available_slots(
-                        date,
-                        state.appointment_type.value if state.appointment_type else "consultation"
-                    )
-                    
-                    if result.get("success"):
-                        slots = result.get("available_slots", [])
-                        time_pref = entities.get("time_preference", "any")
-                        
-                        # Filter by time preference
-                        if time_pref == "morning":
-                            slots = [s for s in slots if int(s["start_time"].split(":")[0]) < 12]
-                        elif time_pref == "afternoon":
-                            slots = [s for s in slots if int(s["start_time"].split(":")[0]) >= 12]
-                        
-                        slots = slots[:5]  # Limit to 5 slots
-                        
-                        if slots:
-                            slots_text = ", ".join([s["start_time"] for s in slots])
-                            context_parts.append(
-                                f"Available slots for {date}: {slots_text}\n"
-                                "Present these options in a friendly, readable format and ask which time works best for them."
-                            )
-                        else:
-                            # Get alternative dates
-                            alt_result = await self.availability_tool.get_available_dates(14, 
-                                state.appointment_type.value if state.appointment_type else "consultation")
-                            alt_dates = alt_result.get("available_dates", [])[:3]
-                            if alt_dates:
-                                alt_text = ", ".join([f"{d['day_name']} {d['date']}" for d in alt_dates])
-                                context_parts.append(
-                                    f"No available slots match the requested time. Alternative dates with availability: {alt_text}. "
-                                    "Offer these alternatives to the user."
-                                )
-                            else:
-                                context_parts.append("No slots available in the coming days. Suggest calling the office.")
-                else:
-                    context_parts.append(
-                        f"User provided reason for visit: '{message}'. "
-                        "Acknowledge this and recommend an appropriate appointment type, then ask for date/time preference."
-                    )
-            elif state.phase == ConversationPhase.COLLECTING_PREFERENCES:
-                # User providing date/time preference
-                date = entities.get("date") or parse_date_reference(message)
-                time_pref = entities.get("time_preference") or parse_time_preference(message)
-                
-                if date or time_pref != "any":
-                    # Fetch availability from mock Calendly
-                    result = await self.availability_tool.get_available_slots(
-                        date or datetime.now().strftime("%Y-%m-%d"),
-                        state.appointment_type.value if state.appointment_type else "consultation"
-                    )
-                    
-                    if result.get("success"):
-                        slots = result.get("available_slots", [])
-                        
-                        # Filter by time preference
-                        if time_pref == "morning":
-                            slots = [s for s in slots if int(s["start_time"].split(":")[0]) < 12]
-                        elif time_pref == "afternoon":
-                            slots = [s for s in slots if int(s["start_time"].split(":")[0]) >= 12]
-                        
-                        slots = slots[:5]
-                        
-                        if slots:
-                            slots_text = ", ".join([s["start_time"] for s in slots])
-                            context_parts.append(
-                                f"Available {time_pref} slots for {date or 'today'}: {slots_text}\n"
-                                "Present these options clearly and ask which time works best for the user."
-                            )
-                        else:
-                            # Get alternative dates
-                            alt_result = await self.availability_tool.get_available_dates(14, 
-                                state.appointment_type.value if state.appointment_type else "consultation")
-                            alt_dates = alt_result.get("available_dates", [])[:3]
-                            if alt_dates:
-                                alt_text = ", ".join([f"{d['day_name']} {d['date']}" for d in alt_dates])
-                                context_parts.append(
-                                    f"No slots available for the requested time. Alternative dates: {alt_text}. "
-                                    "Offer these alternatives."
-                                )
-                else:
-                    context_parts.append("Ask about their preferred date and time (morning/afternoon).")
-            elif state.phase == ConversationPhase.COLLECTING_INFO:
-                collected = state.patient_info or {}
-                missing = []
-                if not collected.get("name"):
-                    missing.append("name")
-                if not collected.get("phone"):
-                    missing.append("phone number")
-                if not collected.get("email"):
-                    missing.append("email address")
-                
-                if missing:
-                    context_parts.append(f"Still need to collect: {', '.join(missing)}. Ask for the next missing item.")
-                else:
-                    # All info collected, show confirmation
-                    slot = state.selected_slot or {}
-                    context_parts.append(
-                        f"All information collected! Show confirmation summary:\n"
-                        f"- Date: {slot.get('date', 'TBD')}\n"
-                        f"- Time: {slot.get('start_time', 'TBD')}\n"
-                        f"- Name: {collected.get('name')}\n"
-                        f"- Phone: {collected.get('phone')}\n"
-                        f"- Email: {collected.get('email')}\n"
-                        f"- Reason: {state.reason_for_visit}\n"
-                        "Ask if they want to confirm the booking."
-                    )
+            return await self._handle_schedule_request(entities, message, state)
         
         elif intent == Intent.SELECT_SLOT:
-            # User selecting a time slot
-            context_parts.append(
-                "User is selecting a time slot. Confirm their choice and ask for their contact information "
-                "(name first, then phone, then email)."
-            )
+            return await self._handle_slot_selection(entities, message, state)
+        
+        elif intent == Intent.PROVIDE_INFO:
+            return await self._handle_info_provided(entities, message, state)
         
         elif intent == Intent.CONFIRM:
-            if state.phase == ConversationPhase.CONFIRMATION:
-                # Book the appointment using mock Calendly
-                slot = state.selected_slot or {}
-                patient_info = state.patient_info or {}
-                
-                result = await self.booking_tool.book_appointment(
-                    appointment_type=state.appointment_type.value if state.appointment_type else "consultation",
-                    date=slot.get("date", ""),
-                    start_time=slot.get("start_time", ""),
-                    patient_name=patient_info.get("name", ""),
-                    patient_email=patient_info.get("email", ""),
-                    patient_phone=patient_info.get("phone", ""),
-                    reason=state.reason_for_visit or "General consultation"
-                )
-                
-                if result.get("success"):
-                    state.phase = ConversationPhase.COMPLETED
-                    booking_info = self.booking_tool.format_confirmation_message(result)
-                    context_parts.append(
-                        f"BOOKING SUCCESSFUL! Here are the details:\n{booking_info}\n\n"
-                        "Provide a warm confirmation message with the booking details. "
-                        "Remind them what to bring and mention the cancellation policy."
-                    )
-                else:
-                    context_parts.append(
-                        f"Booking failed: {result.get('error', 'Unknown error')}. "
-                        "Apologize and offer to try a different time or call the office."
-                    )
-            elif state.phase == ConversationPhase.COLLECTING_PREFERENCES:
-                context_parts.append("User confirmed the appointment type. Now ask for their preferred date and time.")
+            return await self._handle_confirmation(state)
         
         elif intent == Intent.DECLINE:
-            if state.phase == ConversationPhase.SLOT_RECOMMENDATION:
-                context_parts.append("User declined the offered slots. Offer to check different dates or times.")
-            elif state.phase == ConversationPhase.CONFIRMATION:
-                context_parts.append("User wants to change something. Ask what they'd like to modify.")
-            else:
-                context_parts.append("User declined. Ask how else you can help.")
+            return await self._handle_decline(state)
         
         elif intent == Intent.CANCEL:
-            context_parts.append(
-                "User wants to cancel an appointment. Ask for their booking ID or confirmation code "
-                "to proceed with cancellation."
-            )
+            return await self._handle_cancel_request(message, state)
         
         elif intent == Intent.RESCHEDULE:
-            context_parts.append(
-                "User wants to reschedule. Ask for their booking ID and then help find a new time."
-            )
+            return await self._handle_reschedule_request(message, state)
         
-        else:  # OTHER / Unknown
-            if state.phase == ConversationPhase.UNDERSTANDING_NEEDS:
-                context_parts.append(
-                    f"User said: '{message}'. This might be their reason for visit. "
-                    "Acknowledge and recommend an appointment type."
-                )
-            elif state.phase == ConversationPhase.COLLECTING_PREFERENCES:
-                # Check if they mentioned date/time
-                date = parse_date_reference(message)
-                time_pref = parse_time_preference(message)
-                
-                if date or time_pref != "any":
-                    # Get available slots from mock Calendly
-                    result = await self.availability_tool.get_available_slots(
-                        date or datetime.now().strftime("%Y-%m-%d"),
-                        state.appointment_type.value if state.appointment_type else "consultation"
-                    )
-                    
-                    if result.get("success"):
-                        slots = result.get("available_slots", [])[:5]
-                        if slots:
-                            slots_text = ", ".join([s["start_time"] for s in slots])
-                            context_parts.append(
-                                f"Available slots for {date or 'today'}: {slots_text}\n"
-                                "Present these options in a friendly way and ask which works best."
-                            )
-                        else:
-                            # Get alternative dates
-                            alt_result = await self.availability_tool.get_available_dates(14, 
-                                state.appointment_type.value if state.appointment_type else "consultation")
-                            alt_dates = alt_result.get("available_dates", [])[:3]
-                            if alt_dates:
-                                alt_text = ", ".join([f"{d['day_name']} {d['date']}" for d in alt_dates])
-                                context_parts.append(
-                                    f"No slots on requested date. Alternative dates: {alt_text}. "
-                                    "Offer these alternatives."
-                                )
-                else:
-                    context_parts.append("Ask about their preferred date and time (morning/afternoon).")
-            else:
-                context_parts.append(
-                    "Not sure what the user wants. Politely ask how you can help with "
-                    "scheduling, questions about the clinic, or managing existing appointments."
-                )
-        
-        return "\n".join(context_parts)
+        else:
+            return await self._handle_unknown(message, state)
     
-    async def _update_state_for_intent(
+    async def _handle_greeting(self, state: ConversationState) -> str:
+        """Handle greeting intent using Gemini."""
+        state.phase = ConversationPhase.GREETING
+        
+        context = (
+            "The user is greeting us. Welcome them warmly to HealthCare Plus Clinic. "
+            "Offer to help with scheduling appointments or answering questions about the clinic. "
+            "Keep the response friendly and concise (2-3 sentences max)."
+        )
+        
+        return await self.chat_with_gemini(
+            "Hi",
+            state.session_id,
+            context
+        )
+    
+    async def _handle_faq(self, message: str, state: ConversationState) -> str:
+        """Handle FAQ questions using RAG + Gemini."""
+        # Store current phase if we're in the middle of scheduling
+        was_scheduling = state.phase in [
+            ConversationPhase.UNDERSTANDING_NEEDS,
+            ConversationPhase.COLLECTING_PREFERENCES,
+            ConversationPhase.SLOT_RECOMMENDATION,
+            ConversationPhase.COLLECTING_INFO,
+        ]
+        
+        if was_scheduling:
+            state.pending_faq = True
+        
+        # Get answer from RAG
+        rag_answer = self.faq_rag.format_answer_for_chat(message)
+        
+        # Use Gemini to provide a natural response based on RAG context
+        context = (
+            f"The user is asking a question about our clinic. Here's the relevant information from our knowledge base:\n\n"
+            f"{rag_answer}\n\n"
+            f"Please provide a helpful, friendly response based on this information. "
+            f"Keep it concise and conversational."
+        )
+        
+        if was_scheduling:
+            context += " Also, offer to continue with scheduling their appointment."
+        
+        return await self.chat_with_gemini(
+            message,
+            state.session_id,
+            context
+        )
+    
+    async def _handle_schedule_request(
         self,
-        intent: Intent,
         entities: Dict,
         message: str,
         state: ConversationState
-    ) -> None:
-        """Update conversation state based on intent."""
+    ) -> str:
+        """Handle new appointment scheduling request using Gemini."""
+        state.phase = ConversationPhase.UNDERSTANDING_NEEDS
         
-        if intent == Intent.GREETING:
-            state.phase = ConversationPhase.GREETING
+        # Check if reason is already provided
+        if entities.get("reason") or self._extract_reason(message):
+            state.reason_for_visit = entities.get("reason") or self._extract_reason(message)
+            return await self._ask_appointment_type(state)
         
-        elif intent == Intent.SCHEDULE:
-            state.phase = ConversationPhase.UNDERSTANDING_NEEDS
-            if entities.get("date"):
-                state.preferred_date = entities["date"]
-            if entities.get("time_preference"):
-                state.preferred_time_of_day = entities["time_preference"]
+        context = (
+            "The user wants to schedule an appointment. Ask them about the reason for their visit "
+            "in a friendly, professional manner. Keep it brief (1-2 sentences)."
+        )
         
-        elif intent == Intent.PROVIDE_INFO:
-            if state.phase == ConversationPhase.UNDERSTANDING_NEEDS:
-                # Check if date/time was provided
-                if entities.get("date") or entities.get("time_preference"):
-                    # Date/time provided - transition to slot recommendation
-                    if entities.get("date"):
-                        state.preferred_date = entities["date"]
-                    if entities.get("time_preference"):
-                        state.preferred_time_of_day = entities["time_preference"]
-                    state.phase = ConversationPhase.SLOT_RECOMMENDATION
-                else:
-                    # Reason for visit provided
-                    state.reason_for_visit = message
-                    # Infer appointment type
-                    reason_lower = message.lower()
-                    if any(kw in reason_lower for kw in ["follow up", "follow-up", "results", "medication"]):
-                        state.appointment_type = AppointmentType.FOLLOW_UP
-                    elif any(kw in reason_lower for kw in ["physical", "annual", "checkup", "check-up"]):
-                        state.appointment_type = AppointmentType.PHYSICAL_EXAM
-                    elif any(kw in reason_lower for kw in ["specialist", "complex", "detailed"]):
-                        state.appointment_type = AppointmentType.SPECIALIST_CONSULTATION
-                    else:
-                        state.appointment_type = AppointmentType.GENERAL_CONSULTATION
-                    state.phase = ConversationPhase.COLLECTING_PREFERENCES
-            
-            elif state.phase == ConversationPhase.COLLECTING_PREFERENCES:
-                # Date/time preference provided
-                if entities.get("date"):
-                    state.preferred_date = entities["date"]
-                if entities.get("time_preference"):
-                    state.preferred_time_of_day = entities["time_preference"]
-                if entities.get("date") or entities.get("time_preference"):
-                    state.phase = ConversationPhase.SLOT_RECOMMENDATION
-            
-            elif state.phase == ConversationPhase.COLLECTING_INFO:
-                if state.patient_info is None:
-                    state.patient_info = {}
-                
-                # Extract info from message
-                email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', message)
-                phone_match = re.search(r'[\d\-\(\)\s\+]{10,}', message)
-                
-                if email_match:
-                    state.patient_info["email"] = email_match.group()
-                elif phone_match:
-                    state.patient_info["phone"] = phone_match.group().strip()
-                elif not state.patient_info.get("name"):
-                    state.patient_info["name"] = message.strip()
-                
-                # Check if all info collected
-                if all(state.patient_info.get(k) for k in ["name", "phone", "email"]):
-                    state.phase = ConversationPhase.CONFIRMATION
+        return await self.chat_with_gemini(
+            message,
+            state.session_id,
+            context
+        )
+    
+    def _extract_reason(self, message: str) -> Optional[str]:
+        """Extract reason for visit from message."""
+        reason_keywords = ["headache", "checkup", "check-up", "check up", "physical", 
+                         "follow up", "follow-up", "sick", "pain", "symptoms"]
+        message_lower = message.lower()
+        for keyword in reason_keywords:
+            if keyword in message_lower:
+                return message
+        return None
+    
+    async def _ask_appointment_type(self, state: ConversationState) -> str:
+        """Ask about appointment type based on reason using Gemini."""
+        reason = state.reason_for_visit or ""
         
-        elif intent == Intent.SELECT_SLOT:
-            # Parse slot selection
+        # Infer appointment type from reason
+        if any(kw in reason.lower() for kw in ["follow up", "follow-up", "results", "medication"]):
+            suggestion = "Follow-up (15 minutes)"
+            state.appointment_type = AppointmentType.FOLLOW_UP
+        elif any(kw in reason.lower() for kw in ["physical", "annual", "checkup", "check-up"]):
+            suggestion = "Physical Exam (45 minutes)"
+            state.appointment_type = AppointmentType.PHYSICAL_EXAM
+        elif any(kw in reason.lower() for kw in ["specialist", "complex", "detailed"]):
+            suggestion = "Specialist Consultation (60 minutes)"
+            state.appointment_type = AppointmentType.SPECIALIST_CONSULTATION
+        else:
+            suggestion = "General Consultation (30 minutes)"
+            state.appointment_type = AppointmentType.GENERAL_CONSULTATION
+        
+        state.phase = ConversationPhase.COLLECTING_PREFERENCES
+        
+        context = (
+            f"The user's reason for visit is: '{reason}'. "
+            f"Recommend a {suggestion} appointment type. "
+            f"Ask if this sounds appropriate or if they'd prefer something different. "
+            f"Be conversational and empathetic. Keep response to 2-3 sentences."
+        )
+        
+        return await self.chat_with_gemini(
+            f"I need an appointment for: {reason}",
+            state.session_id,
+            context
+        )
+    
+    async def _handle_slot_selection(
+        self,
+        entities: Dict,
+        message: str,
+        state: ConversationState
+    ) -> str:
+        """Handle when user selects a time slot using Gemini."""
+        # Parse the selection
+        if state.phase == ConversationPhase.SLOT_RECOMMENDATION:
+            # Try to match the selection to available slots
             selected = self._parse_slot_selection(message, state)
+            
             if selected:
                 state.selected_slot = selected
                 state.phase = ConversationPhase.COLLECTING_INFO
+                
+                # Format the selected time
+                date_str = selected.get("date", "")
+                time_str = selected.get("start_time", "")
+                
+                try:
+                    date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                    formatted_date = date_obj.strftime("%A, %B %d")
+                    time_obj = datetime.strptime(time_str, "%H:%M")
+                    formatted_time = time_obj.strftime("%I:%M %p").lstrip("0")
+                except ValueError:
+                    formatted_date = date_str
+                    formatted_time = time_str
+                
+                duration = APPOINTMENT_DURATIONS.get(state.appointment_type, 30)
+                
+                context = (
+                    f"The user selected an appointment slot: {formatted_date} at {formatted_time} "
+                    f"for a {duration}-minute appointment. Confirm this is a great choice and "
+                    f"ask for their full name to proceed with booking. Be friendly and professional."
+                )
+                
+                return await self.chat_with_gemini(
+                    message,
+                    state.session_id,
+                    context
+                )
+            else:
+                context = (
+                    "The user's slot selection couldn't be matched to available options. "
+                    "Politely ask them to select one of the previously mentioned times "
+                    "or offer to show different options."
+                )
+                
+                return await self.chat_with_gemini(
+                    message,
+                    state.session_id,
+                    context
+                )
         
-        elif intent == Intent.CONFIRM:
-            if state.phase == ConversationPhase.COLLECTING_PREFERENCES:
-                state.phase = ConversationPhase.SLOT_RECOMMENDATION
-        
-        elif intent == Intent.OTHER:
-            if state.phase == ConversationPhase.UNDERSTANDING_NEEDS:
-                state.reason_for_visit = message
-                state.appointment_type = AppointmentType.GENERAL_CONSULTATION
-                state.phase = ConversationPhase.COLLECTING_PREFERENCES
-            elif state.phase == ConversationPhase.COLLECTING_PREFERENCES:
-                date = parse_date_reference(message)
-                time_pref = parse_time_preference(message)
-                if date:
-                    state.preferred_date = date
-                if time_pref != "any":
-                    state.preferred_time_of_day = time_pref
-                if date or time_pref != "any":
-                    state.phase = ConversationPhase.SLOT_RECOMMENDATION
+        return await self._handle_unknown(message, state)
     
     def _parse_slot_selection(self, message: str, state: ConversationState) -> Optional[Dict]:
         """Parse user's slot selection and match to available slots."""
         message_lower = message.lower()
+        
+        # Get stored available slots from state or recent context
+        # For now, extract date and time from message
         
         # Check for day names
         days_map = {
@@ -809,9 +592,10 @@ class SchedulingAgent:
                 if day_name == "today":
                     selected_date = datetime.now().strftime("%Y-%m-%d")
                 elif day_name == "tomorrow":
-                    from datetime import timedelta
-                    selected_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+                    selected_date = (datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + 
+                                   __import__('datetime').timedelta(days=1)).strftime("%Y-%m-%d")
                 else:
+                    # Calculate the date for the given day name
                     selected_date = parse_date_reference(day_name)
                 break
         
@@ -828,9 +612,16 @@ class SchedulingAgent:
                 break
         
         if selected_date and selected_time:
-            return {"date": selected_date, "start_time": selected_time}
+            return {
+                "date": selected_date,
+                "start_time": selected_time
+            }
         elif selected_date:
-            return {"date": selected_date, "start_time": selected_time}
+            # If only date is selected, might need more info
+            return {
+                "date": selected_date,
+                "start_time": selected_time
+            }
         
         return None
     
@@ -848,111 +639,331 @@ class SchedulingAgent:
         
         return f"{h:02d}:{m:02d}"
     
-    async def _get_upcoming_available_slots(self, days: int = 5, appointment_type: str = "consultation") -> str:
-        """
-        Get available slots for the next few days from ALL doctors.
+    async def _handle_info_provided(
+        self,
+        entities: Dict,
+        message: str,
+        state: ConversationState
+    ) -> str:
+        """Handle when user provides information."""
+        if state.phase != ConversationPhase.COLLECTING_INFO:
+            return await self._handle_unknown(message, state)
         
-        Args:
-            days: Number of days to check
-            appointment_type: Type of appointment
-            
-        Returns:
-            Formatted string with available slots including doctor names
-        """
-        from datetime import timedelta
-        import aiohttp
+        # Initialize patient_info if needed
+        if state.patient_info is None:
+            state.patient_info = {}
         
-        slots_info = []
-        current_date = datetime.now()
-        
-        for i in range(days):
-            check_date = current_date + timedelta(days=i)
-            date_str = check_date.strftime("%Y-%m-%d")
-            day_name = check_date.strftime("%A, %B %d")
-            
-            # Try to get all doctors availability from the API
-            try:
-                async with aiohttp.ClientSession() as session:
-                    url = f"{self.api_base_url}/api/calendly/availability/all-doctors?date={date_str}&appointment_type={appointment_type}"
-                    async with session.get(url) as resp:
-                        if resp.status == 200:
-                            data = await resp.json()
-                            doctors_with_slots = data.get("doctors_with_availability", [])
-                            
-                            if doctors_with_slots:
-                                day_info = f"\n📅 **{day_name}**"
-                                
-                                for doctor_data in doctors_with_slots:
-                                    doctor_name = doctor_data.get("doctor_name", "Unknown")
-                                    specialty = doctor_data.get("specialty", "")
-                                    slots = doctor_data.get("slots", [])
-                                    
-                                    if slots:
-                                        # Format times nicely
-                                        morning_slots = []
-                                        afternoon_slots = []
-                                        
-                                        for slot in slots[:6]:  # Limit slots per doctor
-                                            time_str = slot["start_time"]
-                                            hour = int(time_str.split(":")[0])
-                                            
-                                            # Convert to 12-hour format
-                                            if hour < 12:
-                                                h12 = hour if hour > 0 else 12
-                                                formatted_time = f"{h12}:{time_str.split(':')[1]} AM"
-                                                morning_slots.append(formatted_time)
-                                            else:
-                                                h12 = hour - 12 if hour > 12 else hour
-                                                formatted_time = f"{h12}:{time_str.split(':')[1]} PM"
-                                                afternoon_slots.append(formatted_time)
-                                        
-                                        day_info += f"\n   👨‍⚕️ **{doctor_name}** ({specialty})"
-                                        if morning_slots:
-                                            day_info += f"\n      Morning: {', '.join(morning_slots[:3])}"
-                                        if afternoon_slots:
-                                            day_info += f"\n      Afternoon: {', '.join(afternoon_slots[:3])}"
-                                
-                                slots_info.append(day_info)
-                            continue
-            except Exception as e:
-                print(f"Error fetching all doctors availability: {e}")
-            
-            # Fallback to single doctor availability
-            result = await self.availability_tool.get_available_slots(date_str, appointment_type)
-            
-            if result.get("success"):
-                available = result.get("available_slots", [])
-                if available:
-                    # Format times nicely
-                    morning_slots = []
-                    afternoon_slots = []
-                    
-                    for slot in available:
-                        time_str = slot["start_time"]
-                        hour = int(time_str.split(":")[0])
-                        
-                        # Convert to 12-hour format
-                        if hour < 12:
-                            h12 = hour if hour > 0 else 12
-                            formatted_time = f"{h12}:{time_str.split(':')[1]} AM"
-                            morning_slots.append(formatted_time)
-                        else:
-                            h12 = hour - 12 if hour > 12 else hour
-                            formatted_time = f"{h12}:{time_str.split(':')[1]} PM"
-                            afternoon_slots.append(formatted_time)
-                    
-                    day_info = f"\n📅 **{day_name}**"
-                    if morning_slots:
-                        day_info += f"\n   Morning: {', '.join(morning_slots[:4])}"
-                    if afternoon_slots:
-                        day_info += f"\n   Afternoon: {', '.join(afternoon_slots[:4])}"
-                    
-                    slots_info.append(day_info)
-        
-        if slots_info:
-            return "\n".join(slots_info)
+        # Update with extracted entities
+        if entities.get("email"):
+            state.patient_info["email"] = entities["email"]
+        elif entities.get("phone"):
+            state.patient_info["phone"] = entities["phone"]
         else:
-            return "No available slots in the next few days. Please call the office at +1-555-123-4567."
+            # Check for email in message
+            email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', message)
+            if email_match:
+                state.patient_info["email"] = email_match.group()
+            # Check for phone in message
+            elif re.search(r'[\d\-\(\)\s\+]{10,}', message):
+                phone_match = re.search(r'[\d\-\(\)\s\+]{10,}', message)
+                state.patient_info["phone"] = phone_match.group().strip()
+            # Assume it's a name if we don't have one
+            elif not state.patient_info.get("name"):
+                state.patient_info["name"] = message.strip()
+        
+        # Check what's still missing
+        missing = []
+        if not state.patient_info.get("name"):
+            missing.append("name")
+        if not state.patient_info.get("phone"):
+            missing.append("phone number")
+        if not state.patient_info.get("email"):
+            missing.append("email address")
+        
+        if missing:
+            context = (
+                f"The user just provided some of their information. We still need: {', '.join(missing)}. "
+                f"Thank them and ask for the missing information in a friendly way."
+            )
+            return await self.chat_with_gemini(
+                message,
+                state.session_id,
+                context
+            )
+        
+        # All info collected - move to confirmation
+        state.phase = ConversationPhase.CONFIRMATION
+        
+        slot = state.selected_slot or {}
+        date_str = slot.get("date", "")
+        time_str = slot.get("start_time", "")
+        
+        try:
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+            formatted_date = date_obj.strftime("%A, %B %d, %Y")
+            time_obj = datetime.strptime(time_str, "%H:%M")
+            formatted_time = time_obj.strftime("%I:%M %p").lstrip("0")
+        except ValueError:
+            formatted_date = date_str
+            formatted_time = time_str
+        
+        appt_type = state.appointment_type.value if state.appointment_type else "consultation"
+        duration = APPOINTMENT_DURATIONS.get(state.appointment_type, 30)
+        
+        context = (
+            f"All patient information collected. Present a confirmation summary with these details:\n"
+            f"- Date: {formatted_date}\n"
+            f"- Time: {formatted_time}\n"
+            f"- Duration: {duration} minutes\n"
+            f"- Name: {state.patient_info.get('name', 'N/A')}\n"
+            f"- Phone: {state.patient_info.get('phone', 'N/A')}\n"
+            f"- Email: {state.patient_info.get('email', 'N/A')}\n"
+            f"- Reason: {state.reason_for_visit or 'General consultation'}\n\n"
+            f"Use emojis for visual appeal (📅🕐⏱️👤📞📧📋) and ask if they'd like to confirm the booking."
+        )
+        
+        return await self.chat_with_gemini(
+            message,
+            state.session_id,
+            context
+        )
+    
+    async def _handle_confirmation(self, state: ConversationState) -> str:
+        """Handle booking confirmation using Gemini."""
+        if state.phase != ConversationPhase.CONFIRMATION:
+            # User might be confirming appointment type or other things
+            if state.phase == ConversationPhase.COLLECTING_PREFERENCES:
+                return await self._ask_for_date_preference(state)
+            
+            context = "The user said something affirmative. Ask what they'd like to confirm."
+            return await self.chat_with_gemini("yes", state.session_id, context)
+        
+        # Book the appointment (using mock Calendly API)
+        slot = state.selected_slot or {}
+        patient_info = state.patient_info or {}
+        
+        result = await self.booking_tool.book_appointment(
+            appointment_type=state.appointment_type.value if state.appointment_type else "consultation",
+            date=slot.get("date", ""),
+            start_time=slot.get("start_time", ""),
+            patient_name=patient_info.get("name", ""),
+            patient_email=patient_info.get("email", ""),
+            patient_phone=patient_info.get("phone", ""),
+            reason=state.reason_for_visit or "General consultation"
+        )
+        
+        if result.get("success"):
+            state.phase = ConversationPhase.COMPLETED
+            
+            # Use Gemini to create a warm confirmation message
+            booking_details = self.booking_tool.format_confirmation_message(result)
+            context = (
+                f"The appointment was successfully booked! Here are the details:\n\n{booking_details}\n\n"
+                f"Create a warm, professional confirmation message. Include the booking confirmation number "
+                f"and remind them about any preparation needed. Wish them well."
+            )
+            
+            return await self.chat_with_gemini(
+                "confirm my booking",
+                state.session_id,
+                context
+            )
+        else:
+            context = (
+                f"There was an error booking the appointment: {result.get('error', 'Unknown error')}. "
+                f"Apologize for the inconvenience and offer alternatives like trying a different time "
+                f"or calling the office at +1-555-123-4567."
+            )
+            
+            return await self.chat_with_gemini(
+                "booking failed",
+                state.session_id,
+                context
+            )
+    
+    async def _ask_for_date_preference(self, state: ConversationState) -> str:
+        """Ask user for their date and time preferences using Gemini."""
+        state.phase = ConversationPhase.COLLECTING_PREFERENCES
+        
+        context = (
+            "The user has confirmed their appointment type. Now ask about their preferred date and time. "
+            "Ask if they prefer morning or afternoon, and if they have a specific date in mind or want earliest availability. "
+            "Keep it conversational and friendly."
+        )
+        
+        return await self.chat_with_gemini(
+            "when can I come in",
+            state.session_id,
+            context
+        )
+    
+    async def _handle_decline(self, state: ConversationState) -> str:
+        """Handle when user declines options using Gemini."""
+        if state.phase == ConversationPhase.SLOT_RECOMMENDATION:
+            context = (
+                "The user declined the offered time slots. Offer to check different dates "
+                "or ask if they have a specific day/time preference. Be understanding and helpful."
+            )
+        elif state.phase == ConversationPhase.CONFIRMATION:
+            context = (
+                "The user doesn't want to confirm the appointment as is. "
+                "Ask if they'd like to change any details or start over with a different time. "
+                "Be accommodating."
+            )
+        else:
+            context = "The user declined something. Ask how else you can help them today."
+        
+        return await self.chat_with_gemini(
+            "no",
+            state.session_id,
+            context
+        )
+    
+    async def _handle_cancel_request(self, message: str, state: ConversationState) -> str:
+        """Handle appointment cancellation request using Gemini."""
+        context = (
+            "The user wants to cancel their appointment. Explain that you need their booking ID "
+            "or confirmation code (found in their confirmation email) to proceed. "
+            "Be empathetic and professional."
+        )
+        
+        return await self.chat_with_gemini(
+            message,
+            state.session_id,
+            context
+        )
+    
+    async def _handle_reschedule_request(self, message: str, state: ConversationState) -> str:
+        """Handle appointment rescheduling request using Gemini."""
+        context = (
+            "The user wants to reschedule their appointment. Explain that you need their booking ID "
+            "or confirmation code, then you can help find a new time. Be helpful and understanding."
+        )
+        
+        return await self.chat_with_gemini(
+            message,
+            state.session_id,
+            context
+        )
+    
+    async def _handle_unknown(self, message: str, state: ConversationState) -> str:
+        """Handle unknown or ambiguous intent using Gemini."""
+        # Check if it might be continuing a previous topic
+        if state.phase == ConversationPhase.UNDERSTANDING_NEEDS:
+            # Assume they're providing reason for visit
+            state.reason_for_visit = message
+            return await self._ask_appointment_type(state)
+        
+        elif state.phase == ConversationPhase.COLLECTING_PREFERENCES:
+            # Try to extract date/time preferences
+            date = parse_date_reference(message)
+            time_pref = parse_time_preference(message)
+            
+            if date:
+                state.preferred_date = date
+            if time_pref != "any":
+                state.preferred_time_of_day = time_pref
+            
+            if date or time_pref != "any":
+                return await self._show_available_slots(state)
+        
+        # Use Gemini for a helpful response
+        context = (
+            "The user's intent wasn't clear. Politely explain that you can help with:\n"
+            "- Scheduling new appointments\n"
+            "- Answering questions about the clinic (insurance, hours, location, etc.)\n"
+            "- Rescheduling or canceling existing appointments\n\n"
+            "Ask how you can assist them. Keep it friendly and brief."
+        )
+        
+        return await self.chat_with_gemini(
+            message,
+            state.session_id,
+            context
+        )
+    
+    async def _show_available_slots(self, state: ConversationState) -> str:
+        """Fetch and display available slots using Gemini."""
+        state.phase = ConversationPhase.SLOT_RECOMMENDATION
+        
+        date = state.preferred_date or datetime.now().strftime("%Y-%m-%d")
+        appt_type = state.appointment_type.value if state.appointment_type else "consultation"
+        
+        # Get availability from mock Calendly API
+        result = await self.availability_tool.get_available_slots(date, appt_type)
+        
+        if not result.get("success"):
+            context = (
+                "There was an issue checking availability. Apologize for the inconvenience "
+                "and suggest trying again or calling the office at +1-555-123-4567."
+            )
+            return await self.chat_with_gemini("check availability", state.session_id, context)
+        
+        available_slots = result.get("available_slots", [])
+        
+        # Filter by time preference if specified
+        if state.preferred_time_of_day:
+            filtered = self.availability_tool.get_slots_for_time_preference(
+                available_slots, state.preferred_time_of_day
+            )
+            if filtered:
+                available_slots = filtered
+        
+        if not available_slots:
+            # Get alternative dates from mock Calendly API
+            alt_result = await self.availability_tool.get_available_dates(14, appt_type)
+            alt_dates = alt_result.get("available_dates", [])[:5]
+            
+            if alt_dates:
+                alt_text = "\n".join([
+                    f"- {d['day_name']}, {d['date']} ({d['available_slots']} slots available)"
+                    for d in alt_dates
+                ])
+                context = (
+                    f"No slots available on {date} matching the user's preferences. "
+                    f"Here are alternative dates:\n{alt_text}\n\n"
+                    f"Present these alternatives in a friendly way and ask which works for them."
+                )
+            else:
+                context = (
+                    "No appointments available in the next two weeks. "
+                    "Apologize and suggest calling +1-555-123-4567 to join a waitlist."
+                )
+            
+            return await self.chat_with_gemini("no availability", state.session_id, context)
+        
+        # Format slots for display (show up to 5)
+        display_slots = available_slots[:5]
+        
+        try:
+            date_obj = datetime.strptime(date, "%Y-%m-%d")
+            formatted_date = date_obj.strftime("%A, %B %d")
+        except ValueError:
+            formatted_date = date
+        
+        slots_text = []
+        for slot in display_slots:
+            try:
+                time_obj = datetime.strptime(slot["start_time"], "%H:%M")
+                formatted_time = time_obj.strftime("%I:%M %p").lstrip("0")
+            except ValueError:
+                formatted_time = slot["start_time"]
+            slots_text.append(formatted_time)
+        
+        time_pref_text = state.preferred_time_of_day if state.preferred_time_of_day else "any"
+        
+        context = (
+            f"Available slots for {formatted_date} ({time_pref_text} preference):\n"
+            f"- {', '.join(slots_text)}\n\n"
+            f"Present these time options in a friendly, conversational way "
+            f"and ask which time works best for the user."
+        )
+        
+        return await self.chat_with_gemini(
+            f"show me availability for {formatted_date}",
+            state.session_id,
+            context
+        )
     
     def _get_booking_status(self, state: ConversationState) -> Optional[Dict]:
         """Get current booking status for response."""
@@ -970,4 +981,3 @@ class SchedulingAgent:
                 "time": state.selected_slot.get("start_time")
             }
         return None
-

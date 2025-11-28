@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import ChatInterface from './components/ChatInterface'
 import AppointmentConfirmation from './components/AppointmentConfirmation'
-import AppointmentsList from './components/AppointmentsList'
 
 function App() {
   const [confirmedAppointment, setConfirmedAppointment] = useState(null)
-  const [currentView, setCurrentView] = useState('chat') // 'chat' or 'appointments'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
@@ -34,139 +32,94 @@ function App() {
                 <p className="text-sm text-gray-500">Appointment Scheduling</p>
               </div>
             </div>
-            
-            {/* Navigation */}
-            <nav className="flex items-center space-x-2">
-              <button
-                onClick={() => setCurrentView('chat')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                  currentView === 'chat'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                <span className="hidden sm:inline">Book Appointment</span>
-              </button>
-              <button
-                onClick={() => setCurrentView('appointments')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                  currentView === 'appointments'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span className="hidden sm:inline">View Appointments</span>
-              </button>
+            <div className="flex items-center space-x-4">
               <a 
                 href="tel:+1-555-123-4567"
-                className="hidden md:flex items-center px-4 py-2 text-gray-600 hover:text-blue-600 transition-colors"
+                className="hidden sm:flex items-center text-gray-600 hover:text-blue-600 transition-colors"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
                 +1-555-123-4567
               </a>
-            </nav>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {currentView === 'chat' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Chat Interface - Main */}
-            <div className="lg:col-span-2">
-              <ChatInterface onAppointmentConfirmed={setConfirmedAppointment} />
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Chat Interface - Main */}
+          <div className="lg:col-span-2">
+            <ChatInterface onAppointmentConfirmed={setConfirmedAppointment} />
+          </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Confirmed Appointment */}
-              {confirmedAppointment && (
-                <AppointmentConfirmation appointment={confirmedAppointment} />
-              )}
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Confirmed Appointment */}
+            {confirmedAppointment && (
+              <AppointmentConfirmation appointment={confirmedAppointment} />
+            )}
 
-              {/* Quick Info Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Quick Information
-                </h3>
-                <div className="space-y-4 text-sm">
-                  <div>
-                    <p className="font-medium text-gray-700">Hours of Operation</p>
-                    <p className="text-gray-500">Mon-Thu: 8AM - 6PM</p>
-                    <p className="text-gray-500">Fri: 8AM - 5PM</p>
-                    <p className="text-gray-500">Sat: 9AM - 1PM</p>
-                    <p className="text-gray-500">Sun: Closed</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-700">Location</p>
-                    <p className="text-gray-500">123 Medical Center Drive</p>
-                    <p className="text-gray-500">Suite 200, Springfield, IL</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-700">Contact</p>
-                    <p className="text-gray-500">+1-555-123-4567</p>
-                    <p className="text-gray-500">appointments@healthcareplus.com</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Appointment Types */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                  </svg>
-                  Appointment Types
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-50">
-                    <span className="text-gray-700">General Consultation</span>
-                    <span className="text-sm text-gray-500">30 min</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-50">
-                    <span className="text-gray-700">Follow-up Visit</span>
-                    <span className="text-sm text-gray-500">15 min</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-50">
-                    <span className="text-gray-700">Physical Exam</span>
-                    <span className="text-sm text-gray-500">45 min</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 rounded-lg bg-gray-50">
-                    <span className="text-gray-700">Specialist Consultation</span>
-                    <span className="text-sm text-gray-500">60 min</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* View Appointments Button */}
-              <button
-                onClick={() => setCurrentView('appointments')}
-                className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center gap-2 shadow-md"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            {/* Quick Info Card */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                View All Appointments
-              </button>
+                Quick Information
+              </h3>
+              <div className="space-y-4 text-sm">
+                <div>
+                  <p className="font-medium text-gray-700">Hours of Operation</p>
+                  <p className="text-gray-500">Mon-Thu: 8AM - 6PM</p>
+                  <p className="text-gray-500">Fri: 8AM - 5PM</p>
+                  <p className="text-gray-500">Sat: 9AM - 1PM</p>
+                  <p className="text-gray-500">Sun: Closed</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Location</p>
+                  <p className="text-gray-500">123 Medical Center Drive</p>
+                  <p className="text-gray-500">Suite 200, Springfield, IL</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Contact</p>
+                  <p className="text-gray-500">+1-555-123-4567</p>
+                  <p className="text-gray-500">appointments@healthcareplus.com</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Appointment Types */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                Appointment Types
+              </h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-2 rounded-lg bg-gray-50">
+                  <span className="text-gray-700">General Consultation</span>
+                  <span className="text-sm text-gray-500">30 min</span>
+                </div>
+                <div className="flex justify-between items-center p-2 rounded-lg bg-gray-50">
+                  <span className="text-gray-700">Follow-up Visit</span>
+                  <span className="text-sm text-gray-500">15 min</span>
+                </div>
+                <div className="flex justify-between items-center p-2 rounded-lg bg-gray-50">
+                  <span className="text-gray-700">Physical Exam</span>
+                  <span className="text-sm text-gray-500">45 min</span>
+                </div>
+                <div className="flex justify-between items-center p-2 rounded-lg bg-gray-50">
+                  <span className="text-gray-700">Specialist Consultation</span>
+                  <span className="text-sm text-gray-500">60 min</span>
+                </div>
+              </div>
             </div>
           </div>
-        ) : (
-          <div className="max-w-4xl mx-auto">
-            <AppointmentsList />
-          </div>
-        )}
+        </div>
       </main>
 
       {/* Footer */}

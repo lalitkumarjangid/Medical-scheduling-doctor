@@ -95,123 +95,13 @@ def is_in_lunch_break(time_str: str, lunch_start: Optional[str], lunch_end: Opti
     return ls <= t < le
 
 
-def get_doctor_by_id(doctor_id: str, schedule_data: dict) -> Optional[dict]:
-    """Get doctor info by ID."""
-    for doctor in schedule_data.get("doctors", []):
-        if doctor["id"] == doctor_id:
-            return doctor
-    return None
-
-
-def get_available_slots_for_doctor(
-    date_str: str,
-    appointment_type: AppointmentType,
-    doctor: dict,
-    schedule_data: dict
-) -> List[dict]:
-    """
-    Calculate available time slots for a specific doctor on a given date.
-    """
-    # Check if date is valid
-    try:
-        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
-    except ValueError:
-        return []
-    
-    # Check if date is in the past
-    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    if date_obj < today:
-        return []
-    
-    # Check if date is blocked
-    if date_str in doctor.get("blocked_dates", []):
-        return []
-    
-    # Get day name and working hours
-    day_name = get_day_name(date_str)
-    working_hours = doctor.get("working_hours", {}).get(day_name)
-    
-    if not working_hours:
-        return []
-    
-    # Check if doctor handles this appointment type
-    if appointment_type.value not in doctor.get("appointment_types", []):
-        return []
-    
-    # Get appointment duration
-    duration = APPOINTMENT_DURATIONS.get(appointment_type, 30)
-    
-    # Generate all possible slots
-    start_time = working_hours["start"]
-    end_time = working_hours["end"]
-    lunch_start = working_hours.get("lunch_start")
-    lunch_end = working_hours.get("lunch_end")
-    
-    slots = []
-    current_time = start_time
-    
-    # Get existing appointments for this doctor on this date
-    existing_appointments = [
-        appt for appt in schedule_data.get("existing_appointments", [])
-        if appt["date"] == date_str and appt.get("doctor_id") == doctor["id"]
-    ]
-    
-    while parse_time(current_time) < parse_time(end_time):
-        slot_end = add_minutes(current_time, duration)
-        
-        # Check if slot extends beyond working hours
-        if parse_time(slot_end) > parse_time(end_time):
-            break
-        
-        # Check if slot is during lunch
-        if is_in_lunch_break(current_time, lunch_start, lunch_end):
-            current_time = lunch_end
-            continue
-        
-        # Check if slot end is during lunch
-        if lunch_start and lunch_end:
-            if parse_time(current_time) < parse_time(lunch_start) and parse_time(slot_end) > parse_time(lunch_start):
-                current_time = lunch_end
-                continue
-        
-        # Check if slot conflicts with existing appointments
-        is_available = True
-        for appt in existing_appointments:
-            if time_overlaps(current_time, slot_end, appt["start_time"], appt["end_time"]):
-                is_available = False
-                break
-        
-        # For today, check if slot is in the past
-        if date_obj.date() == datetime.now().date():
-            now = datetime.now()
-            slot_start_dt = datetime.strptime(f"{date_str} {current_time}", "%Y-%m-%d %H:%M")
-            if slot_start_dt <= now:
-                is_available = False
-        
-        if is_available:
-            slots.append({
-                "start_time": current_time,
-                "end_time": slot_end,
-                "doctor_id": doctor["id"],
-                "doctor_name": doctor["name"],
-                "specialty": doctor["specialty"]
-            })
-        
-        # Move to next slot
-        current_time = add_minutes(current_time, schedule_data["settings"]["slot_interval_minutes"])
-    
-    return slots
-
-
 def get_available_slots(
     date_str: str,
     appointment_type: AppointmentType,
-    schedule_data: dict,
-    doctor_id: Optional[str] = None
+    schedule_data: dict
 ) -> List[TimeSlot]:
     """
     Calculate available time slots for a given date and appointment type.
-    Returns slots across all doctors unless a specific doctor is requested.
     """
     # Check if date is valid
     try:
@@ -224,18 +114,8 @@ def get_available_slots(
     if date_obj < today:
         return []
     
-    # If specific doctor requested
-    if doctor_id:
-        doctor = get_doctor_by_id(doctor_id, schedule_data)
-        if not doctor:
-            return []
-        all_slots = get_available_slots_for_doctor(date_str, appointment_type, doctor, schedule_data)
-        return [TimeSlot(start_time=s["start_time"], end_time=s["end_time"], available=True) for s in all_slots]
-    
-    # Get slots from all doctors (use first doctor for basic TimeSlot return)
-    doctor = schedule_data["doctors"][0] if schedule_data.get("doctors") else None
-    if not doctor:
-        return []
+    # Get doctor info (using first doctor for now)
+    doctor = schedule_data["doctors"][0]
     
     # Check if date is blocked
     if date_str in doctor.get("blocked_dates", []):
@@ -260,10 +140,10 @@ def get_available_slots(
     slots = []
     current_time = start_time
     
-    # Get existing appointments for this date (for first doctor)
+    # Get existing appointments for this date
     existing_appointments = [
         appt for appt in schedule_data.get("existing_appointments", [])
-        if appt["date"] == date_str and appt.get("doctor_id") == doctor["id"]
+        if appt["date"] == date_str
     ]
     
     while parse_time(current_time) < parse_time(end_time):
@@ -310,35 +190,13 @@ def get_available_slots(
     return slots
 
 
-def get_all_doctors_availability(
-    date_str: str,
-    appointment_type: AppointmentType,
-    schedule_data: dict
-) -> List[dict]:
-    """
-    Get available slots from ALL doctors for a given date.
-    Returns a list of slots with doctor info included.
-    """
-    all_slots = []
-    
-    for doctor in schedule_data.get("doctors", []):
-        doctor_slots = get_available_slots_for_doctor(date_str, appointment_type, doctor, schedule_data)
-        all_slots.extend(doctor_slots)
-    
-    # Sort by time
-    all_slots.sort(key=lambda x: x["start_time"])
-    
-    return all_slots
-
-
 @router.get("/availability", response_model=AvailabilityResponse)
-async def get_availability(date: str, appointment_type: str = "consultation", doctor_id: Optional[str] = None):
+async def get_availability(date: str, appointment_type: str = "consultation"):
     """
     Get available time slots for a specific date and appointment type.
     
     - **date**: Date in YYYY-MM-DD format
     - **appointment_type**: Type of appointment (consultation, followup, physical, specialist)
-    - **doctor_id**: Optional doctor ID to filter by specific doctor
     """
     try:
         # Validate date format
@@ -357,7 +215,7 @@ async def get_availability(date: str, appointment_type: str = "consultation", do
     
     # Load schedule and get available slots
     schedule_data = load_schedule_data()
-    slots = get_available_slots(date, appt_type, schedule_data, doctor_id)
+    slots = get_available_slots(date, appt_type, schedule_data)
     
     return AvailabilityResponse(
         date=date,
@@ -365,89 +223,6 @@ async def get_availability(date: str, appointment_type: str = "consultation", do
         duration_minutes=APPOINTMENT_DURATIONS[appt_type],
         available_slots=slots
     )
-
-
-@router.get("/doctors")
-async def get_doctors():
-    """
-    Get all doctors with their details.
-    """
-    schedule_data = load_schedule_data()
-    doctors = schedule_data.get("doctors", [])
-    
-    return {
-        "total": len(doctors),
-        "doctors": [
-            {
-                "id": d["id"],
-                "name": d["name"],
-                "specialty": d["specialty"],
-                "qualifications": d.get("qualifications"),
-                "experience_years": d.get("experience_years"),
-                "bio": d.get("bio"),
-                "languages": d.get("languages", []),
-                "rating": d.get("rating"),
-                "reviews_count": d.get("reviews_count"),
-                "appointment_types": d.get("appointment_types", [])
-            }
-            for d in doctors
-        ]
-    }
-
-
-@router.get("/availability/all-doctors")
-async def get_all_doctors_availability_endpoint(date: str, appointment_type: str = "consultation"):
-    """
-    Get available time slots from ALL doctors for a specific date.
-    Returns slots grouped by doctor with doctor information included.
-    
-    - **date**: Date in YYYY-MM-DD format
-    - **appointment_type**: Type of appointment (consultation, followup, physical, specialist)
-    """
-    try:
-        # Validate date format
-        date_obj = datetime.strptime(date, "%Y-%m-%d")
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
-    
-    # Map appointment type string to enum
-    try:
-        appt_type = AppointmentType(appointment_type)
-    except ValueError:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid appointment type. Valid types: {[t.value for t in AppointmentType]}"
-        )
-    
-    # Load schedule and get available slots from all doctors
-    schedule_data = load_schedule_data()
-    all_slots = get_all_doctors_availability(date, appt_type, schedule_data)
-    
-    # Group by doctor
-    doctors_availability = {}
-    for slot in all_slots:
-        doctor_id = slot["doctor_id"]
-        if doctor_id not in doctors_availability:
-            doctors_availability[doctor_id] = {
-                "doctor_id": doctor_id,
-                "doctor_name": slot["doctor_name"],
-                "specialty": slot["specialty"],
-                "slots": []
-            }
-        doctors_availability[doctor_id]["slots"].append({
-            "start_time": slot["start_time"],
-            "end_time": slot["end_time"]
-        })
-    
-    return {
-        "date": date,
-        "day_name": date_obj.strftime("%A"),
-        "appointment_type": appointment_type,
-        "duration_minutes": APPOINTMENT_DURATIONS[appt_type],
-        "total_available_slots": len(all_slots),
-        "doctors_with_availability": list(doctors_availability.values()),
-        "all_slots": all_slots
-    }
 
 
 @router.post("/book", response_model=BookingResponse)
@@ -460,19 +235,12 @@ async def book_appointment(booking: BookingRequest):
     # Load current schedule
     schedule_data = load_schedule_data()
     
-    # Get doctor ID (default to first doctor if not specified)
-    doctor_id = getattr(booking, 'doctor_id', None) or "dr-001"
-    doctor = get_doctor_by_id(doctor_id, schedule_data)
-    if not doctor:
-        doctor = schedule_data["doctors"][0]
-        doctor_id = doctor["id"]
-    
-    # Validate the slot is still available for this doctor
-    doctor_slots = get_available_slots_for_doctor(booking.date, booking.appointment_type, doctor, schedule_data)
+    # Validate the slot is still available
+    slots = get_available_slots(booking.date, booking.appointment_type, schedule_data)
     
     slot_available = False
-    for slot in doctor_slots:
-        if slot["start_time"] == booking.start_time:
+    for slot in slots:
+        if slot.start_time == booking.start_time and slot.available:
             slot_available = True
             break
     
@@ -493,7 +261,7 @@ async def book_appointment(booking: BookingRequest):
     # Create appointment record
     new_appointment = {
         "id": booking_id,
-        "doctor_id": doctor_id,
+        "doctor_id": "dr-001",
         "date": booking.date,
         "start_time": booking.start_time,
         "end_time": end_time,
@@ -525,9 +293,7 @@ async def book_appointment(booking: BookingRequest):
             "appointment_type": booking.appointment_type.value,
             "patient_name": booking.patient.name,
             "patient_email": booking.patient.email,
-            "doctor_id": doctor_id,
-            "doctor_name": doctor.get("name", "Dr. Sarah Johnson"),
-            "doctor_specialty": doctor.get("specialty", "General Practice"),
+            "doctor_name": "Dr. Sarah Johnson",
             "clinic_name": "HealthCare Plus Clinic",
             "clinic_phone": "+1-555-123-4567",
             "clinic_address": "123 Medical Center Drive, Suite 200, Springfield, IL 62701"
@@ -648,135 +414,6 @@ async def get_appointment(booking_id: str):
             return appt
     
     raise HTTPException(status_code=404, detail="Appointment not found.")
-
-
-@router.get("/appointments")
-async def get_all_appointments(
-    status: Optional[str] = None,
-    date: Optional[str] = None,
-    patient_email: Optional[str] = None,
-    doctor_id: Optional[str] = None
-):
-    """
-    Get all booked appointments with optional filters.
-    
-    - **status**: Filter by status (confirmed, cancelled, completed)
-    - **date**: Filter by specific date (YYYY-MM-DD)
-    - **patient_email**: Filter by patient email
-    - **doctor_id**: Filter by doctor ID
-    """
-    schedule_data = load_schedule_data()
-    appointments = schedule_data.get("existing_appointments", [])
-    
-    # Build doctor lookup map
-    doctor_map = {d["id"]: d for d in schedule_data.get("doctors", [])}
-    
-    # Apply filters
-    if status:
-        appointments = [a for a in appointments if a.get("status") == status]
-    
-    if date:
-        appointments = [a for a in appointments if a.get("date") == date]
-    
-    if patient_email:
-        appointments = [a for a in appointments if a.get("patient_email") == patient_email]
-    
-    if doctor_id:
-        appointments = [a for a in appointments if a.get("doctor_id") == doctor_id]
-    
-    # Sort by date and time
-    appointments = sorted(
-        appointments,
-        key=lambda x: (x.get("date", ""), x.get("start_time", ""))
-    )
-    
-    # Format appointments for display
-    formatted_appointments = []
-    for appt in appointments:
-        doctor = doctor_map.get(appt.get("doctor_id"), {})
-        formatted_appointments.append({
-            "booking_id": appt.get("id"),
-            "confirmation_code": appt.get("confirmation_code"),
-            "date": appt.get("date"),
-            "day_name": get_day_name(appt.get("date", datetime.now().strftime("%Y-%m-%d"))).capitalize(),
-            "start_time": appt.get("start_time"),
-            "end_time": appt.get("end_time"),
-            "appointment_type": appt.get("type"),
-            "patient_name": appt.get("patient_name"),
-            "patient_email": appt.get("patient_email"),
-            "patient_phone": appt.get("patient_phone"),
-            "reason": appt.get("reason"),
-            "status": appt.get("status"),
-            "doctor_id": appt.get("doctor_id"),
-            "doctor_name": doctor.get("name", "Unknown Doctor"),
-            "doctor_specialty": doctor.get("specialty", ""),
-            "created_at": appt.get("created_at")
-        })
-    
-    return {
-        "total": len(formatted_appointments),
-        "appointments": formatted_appointments
-    }
-
-
-@router.get("/my-appointments")
-async def get_my_appointments(email: str):
-    """
-    Get all appointments for a specific patient by email.
-    
-    - **email**: Patient's email address
-    """
-    if not email:
-        raise HTTPException(status_code=400, detail="Email is required")
-    
-    schedule_data = load_schedule_data()
-    appointments = schedule_data.get("existing_appointments", [])
-    
-    # Build doctor lookup map
-    doctor_map = {d["id"]: d for d in schedule_data.get("doctors", [])}
-    
-    # Filter by patient email
-    patient_appointments = [a for a in appointments if a.get("patient_email", "").lower() == email.lower()]
-    
-    # Categorize appointments
-    today = datetime.now().strftime("%Y-%m-%d")
-    
-    upcoming = []
-    past = []
-    
-    for appt in patient_appointments:
-        doctor = doctor_map.get(appt.get("doctor_id"), {})
-        appt_info = {
-            "booking_id": appt.get("id"),
-            "confirmation_code": appt.get("confirmation_code"),
-            "date": appt.get("date"),
-            "day_name": get_day_name(appt.get("date", today)).capitalize(),
-            "start_time": appt.get("start_time"),
-            "end_time": appt.get("end_time"),
-            "appointment_type": appt.get("type"),
-            "reason": appt.get("reason"),
-            "status": appt.get("status"),
-            "doctor_id": appt.get("doctor_id"),
-            "doctor_name": doctor.get("name", "Unknown Doctor"),
-            "doctor_specialty": doctor.get("specialty", "")
-        }
-        
-        if appt.get("date", "") >= today and appt.get("status") == "confirmed":
-            upcoming.append(appt_info)
-        else:
-            past.append(appt_info)
-    
-    # Sort upcoming by date/time ascending, past by date/time descending
-    upcoming = sorted(upcoming, key=lambda x: (x["date"], x["start_time"]))
-    past = sorted(past, key=lambda x: (x["date"], x["start_time"]), reverse=True)
-    
-    return {
-        "email": email,
-        "upcoming_appointments": upcoming,
-        "past_appointments": past,
-        "total_upcoming": len(upcoming),
-        "total_past": len(past)
-    }
 
 
 @router.get("/schedule/dates")

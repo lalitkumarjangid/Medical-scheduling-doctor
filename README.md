@@ -1,6 +1,6 @@
 # Medical Appointment Scheduling Agent
 
-An intelligent conversational agent that helps patients schedule medical appointments through a natural chat interface. Built with FastAPI, React, and Gemini GPT-4.
+An intelligent conversational agent that helps patients schedule medical appointments through a natural chat interface. Built with FastAPI, React, and OpenAI GPT-4.
 
 ![Architecture](architecture_diagram.png)
 
@@ -64,7 +64,7 @@ An intelligent conversational agent that helps patients schedule medical appoint
 | Component | Technology |
 |-----------|------------|
 | **Backend** | FastAPI (Python 3.10+) |
-| **LLM** | Gemini Gemini -2.5-flash |
+| **LLM** | OpenAI GPT-4 Turbo |
 | **Vector Database** | ChromaDB |
 | **Frontend** | React 18 + Vite + TailwindCSS |
 | **Calendar API** | Mock Calendly Implementation |
@@ -113,7 +113,7 @@ appointment-scheduling-agent/
 ### Prerequisites
 - Python 3.10+
 - Node.js 18+
-- Gemini API key
+- OpenAI API key
 
 ### 1. Clone and Setup Environment
 
@@ -134,8 +134,8 @@ pip install -r requirements.txt
 # Copy example env file
 cp .env.example .env
 
-# Edit .env and add your Gemini API key
-# Gemini_API_KEY=your_key_here
+# Edit .env and add your OpenAI API key
+# OPENAI_API_KEY=your_key_here
 ```
 
 ### 3. Start Backend Server
@@ -391,7 +391,7 @@ Response:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `Gemini_API_KEY` | Gemini API key | Required |
+| `OPENAI_API_KEY` | OpenAI API key | Required |
 | `LLM_MODEL` | Model to use | gpt-4-turbo |
 | `BACKEND_PORT` | Backend port | 8000 |
 | `FRONTEND_PORT` | Frontend port | 3000 |
@@ -409,4 +409,3 @@ MIT License - See LICENSE file for details.
 3. Commit your changes
 4. Push to the branch
 5. Open a Pull Request
-# Medical-scheduling-doctor
